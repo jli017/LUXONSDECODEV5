@@ -4,7 +4,6 @@ package org.firstinspires.ftc.teamcode.utils.subsystems;
 import static com.seattlesolvers.solverslib.util.MathUtils.clamp;
 
 import com.bylazar.configurables.annotations.Configurable;
-import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
@@ -13,7 +12,7 @@ import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 import com.seattlesolvers.solverslib.util.InterpLUT;
 
-import org.firstinspires.ftc.teamcode.utils.Mosby;
+import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 import org.firstinspires.ftc.teamcode.utils.Storage;
 
 
@@ -23,7 +22,6 @@ public class Shooter extends SubsystemBase {
     public Motor shooter2;
     public ServoEx hood;
     public ServoEx stopper;
-    public ServoEx transfer;
 
     public static double P = 0.001;//0.006 0.000389
     public static double D = 0.0;
@@ -63,8 +61,6 @@ public class Shooter extends SubsystemBase {
 
         hood = new ServoEx(hMap, "HoodServo");
         stopper = new ServoEx(hMap, "StopperServo");
-        transfer = new ServoEx(hMap, "TransferServo");
-        transfer.set(TRANSFER_DOWN);
 
         shooter1.setInverted(true);
         controller.setTolerance(TOLERANCE);
@@ -96,13 +92,13 @@ public class Shooter extends SubsystemBase {
         lutHood.add(200, 0.35);
         lutVelocity.createLUT();
         lutHood.createLUT();
-       pos = Mosby.drivetrain.follower.getPose();
+        pos = Lebruxon.drivetrain.follower.getPose();
         controller.setP(P);
         controller.setF(F);
 
 
         shooterBlah = false;
-        distance = Math.hypot(Mosby.goalShooter.getX()-Storage.pose.getX(),Mosby.goalShooter.getY()-Storage.pose.getY());
+        distance = Math.hypot(Lebruxon.goalShooter.getX()-Storage.pose.getX(), Lebruxon.goalShooter.getY()-Storage.pose.getY());
 
 
     }
@@ -113,11 +109,11 @@ public class Shooter extends SubsystemBase {
             setPower(0);
             return;
         }
-        pos = Mosby.drivetrain.follower.getPose();
+        pos = Lebruxon.drivetrain.follower.getPose();
 
         distance = Math.hypot(
-               Mosby.goalShooter.getX() - pos.getX(),
-                Mosby.goalShooter.getY() - pos.getY()
+               Lebruxon.goalShooter.getX() - pos.getX(),
+                Lebruxon.goalShooter.getY() - pos.getY()
         );
 
         double currentVelocity = getVelocity();
@@ -172,12 +168,6 @@ public class Shooter extends SubsystemBase {
 
     public void openStopper() {
         stopper.set(STOPPER_OPEN);
-    }
-    public void hitTransfer(){
-        transfer.set(TRANSFER_UP);
-    }
-    public void downTransfer(){
-        transfer.set(TRANSFER_DOWN);
     }
 
     public void resetHood() {

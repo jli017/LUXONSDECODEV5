@@ -41,7 +41,7 @@ public class Intake extends SubsystemBase {
 
 public class Intake extends SubsystemBase {
 
-    public Motor intake;
+    public Motor intake, transfer;
 
     // Same behavior as your old intake
     private static final double INTAKE_POWER = -1.0;
@@ -49,27 +49,23 @@ public class Intake extends SubsystemBase {
 
     // Internal state
     private double minPower = 0.0;
-    private double power = 0.0;
+    private double intakePower = 0.0;
+
+    private double transferPower = 0.0;
 
     public Intake(HardwareMap hMap) {
         intake = new Motor(hMap, "Intake");
+        transfer = new Motor(hMap, "Transfer");
 
         intake.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        intake.setInverted(true); // matches old negative power logic
+        transfer.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         intake.set(minPower);
+        transfer.set(minPower);
     }
 
-    public void setPower(double power)
-    {
-        this.power = power;
-    }
-    public void setPower(double power, double time) {
-
-    }
-
-
-    public void forceIntake() {
-        power = INTAKE_POWER;
+    public void setPower(double intake, double transfer) {
+        this.intakePower = intake;
+        this.transferPower = transfer;
     }
 
     public void setMinPower(double minPower) {
@@ -79,22 +75,35 @@ public class Intake extends SubsystemBase {
 
 
     public void periodic() {
-        double pow = Math.max(Math.abs(power), Math.abs(minPower));
+        double inpow = Math.max(Math.abs(intakePower), Math.abs(minPower));
 
-        if (pow == Math.abs(minPower)) {
+        if (inpow == Math.abs(minPower)) {
             intake.set(minPower);
         } else {
-            intake.set(power);
+            intake.set(intakePower);
+        }
+
+        double trpow = Math.max(Math.abs(transferPower), Math.abs(minPower));
+        if (trpow == Math.abs(minPower)){
+            intake.set(minPower);
+        } else {
+            intake.set(transferPower);
         }
     }
     public void update(){
-        double pow = Math.max(Math.abs(power), Math.abs(minPower));
-        if(pow == Math.abs(minPower)){
+        double inpow = Math.max(Math.abs(intakePower), Math.abs(minPower));
+        if (inpow == Math.abs(minPower)){
             intake.set(minPower);
-        }else {
-            intake.set(power);
+        } else {
+            intake.set(intakePower);
         }
 
+        double trpow = Math.max(Math.abs(transferPower), Math.abs(minPower));
+        if (trpow == Math.abs(minPower)){
+            intake.set(minPower);
+        } else {
+            intake.set(transferPower);
+        }
     }
 
 }

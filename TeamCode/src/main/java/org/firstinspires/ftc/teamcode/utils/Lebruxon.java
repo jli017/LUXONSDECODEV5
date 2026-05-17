@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.utils.subsystems.Turret;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Configurable
-public class Mosby {
+public class Lebruxon {
     public enum MatchState {
         AUTO,
         TELEOP
@@ -63,46 +63,46 @@ public class Mosby {
     public static double primeIntakeSpeed3 = 0;
 
     public static void init(HardwareMap hardwareMap, MatchState matchState, Alliance alliance) {
-        Mosby.matchState = matchState;
-        Mosby.alliance = alliance;
+        Lebruxon.matchState = matchState;
+        Lebruxon.alliance = alliance;
         //Mosby.startPose = alliance == Alliance.RED? RED_START_POSE : BLUE_START_POSE;
         //Mosby.goal = alliance == Alliance.RED? RED_GOAL : BLUE_GOAL;
         //Mosby.goalShooter = alliance == Alliance.RED? RED_GOALPIDF : BLUE_GOALPIDF;
         switch (alliance) {
             case RED:
-                Mosby.startPose = RED_START_POSE;
-                Mosby.goal = RED_GOAL;
-                Mosby.goalShooter = RED_GOALPIDF;
+                Lebruxon.startPose = RED_START_POSE;
+                Lebruxon.goal = RED_GOAL;
+                Lebruxon.goalShooter = RED_GOALPIDF;
                 break;
 
             case BLUE:
-                Mosby.startPose = BLUE_START_POSE;
-                Mosby.goal = BLUE_GOAL;
-                Mosby.goalShooter = BLUE_GOALPIDF;
+                Lebruxon.startPose = BLUE_START_POSE;
+                Lebruxon.goal = BLUE_GOAL;
+                Lebruxon.goalShooter = BLUE_GOALPIDF;
                 break;
 
             case REDCLOSE:
-                Mosby.startPose = CLOSE_RED_START_POSE;
-                Mosby.goal = RED_GOAL;
-                Mosby.goalShooter = RED_GOALPIDF;
+                Lebruxon.startPose = CLOSE_RED_START_POSE;
+                Lebruxon.goal = RED_GOAL;
+                Lebruxon.goalShooter = RED_GOALPIDF;
                 break;
 
             case BLUECLOSE:
-                Mosby.startPose = CLOSE_BLUE_START_POSE;
-                Mosby.goal = BLUE_GOAL;
-                Mosby.goalShooter = BLUE_GOALPIDF;
+                Lebruxon.startPose = CLOSE_BLUE_START_POSE;
+                Lebruxon.goal = BLUE_GOAL;
+                Lebruxon.goalShooter = BLUE_GOALPIDF;
                 break;
 
             case BLUESQ:
-                Mosby.startPose = BLUE_SQ_START_POSE;
-                Mosby.goal = BLUE_GOAL;
-                Mosby.goalShooter = BLUE_GOALPIDF;
+                Lebruxon.startPose = BLUE_SQ_START_POSE;
+                Lebruxon.goal = BLUE_GOAL;
+                Lebruxon.goalShooter = BLUE_GOALPIDF;
                 break;
 
             case REDSQ:
-                Mosby.startPose = RED_SQ_START_POSE;
-                Mosby.goal = RED_GOAL;
-                Mosby.goalShooter = RED_GOALPIDF;
+                Lebruxon.startPose = RED_SQ_START_POSE;
+                Lebruxon.goal = RED_GOAL;
+                Lebruxon.goalShooter = RED_GOALPIDF;
                 break;
         }
 
@@ -115,8 +115,8 @@ public class Mosby {
 
         Storage.alliance = alliance;
 
-        Mosby.drivetrain.follower.setStartingPose(matchState == MatchState.AUTO ? startPose : Storage.pose);
-        Mosby.drivetrain.follower.update();
+        Lebruxon.drivetrain.follower.setStartingPose(matchState == MatchState.AUTO ? startPose : Storage.pose);
+        Lebruxon.drivetrain.follower.update();
 
         CommandScheduler.getInstance().registerSubsystem(drivetrain, turret, intake, shooter);
 
@@ -140,7 +140,6 @@ public class Mosby {
             shooter.controller.reset();
             shooter.autoPower(true, false);
             shooter.setVelocity(Shooter.idleVeloMultiplier );
-            shooter.closeStopper();
             shooter.resetHood();
         });
     }
@@ -160,84 +159,30 @@ public class Mosby {
     public static InstantCommand prime() {
         return new InstantCommand(() -> {
             turret.enableAim = true;
-            intake.setPower(0);
+            intake.setPower(0, 0);
             intake.setMinPower(0);
 
             //shooter.openStopper();
             shooter.autoPower(true, true); // ONLY place
         });
-    }
-
-    public static InstantCommand prime2() {
-        return new InstantCommand(() -> {
-            turret.AUTOenableAim = true;
-            intake.setPower(0);
-            intake.setMinPower(0);
-
-            //shooter.openStopper();
-            shooter.autoPower(true, true); // ONLY place
-        });
-    }
-
-
-    public static Command shootPluh() {
-        return new SequentialCommandGroup(
-
-                // Wait until flywheel is spun up
-
-                // Aim + open stopper + ensure shooter is enabled
-                new InstantCommand(() -> {
-                    turret.enableAim = true;
-                   // shooter.setShooter(true);
-                    shooter.openStopper();
-                }),
-
-                // Wait for flywheel speed drop (ball fired)
-               new WaitUntilCommand(() ->
-                       Math.abs(Mosby.shooter.controller.getPositionError()) > flywheelThreshhold
-                ),
-
-                // Feed sequence
-                new InstantCommand(() -> shooter.hitTransfer()),
-                new WaitCommand(125),
-                new InstantCommand(() -> shooter.downTransfer()),
-                new WaitCommand(125),
-
-                new InstantCommand(() -> {
-                    intake.setPower(1);
-                    intake.setMinPower(1);
-                }),
-                new WaitCommand(200),
-                new InstantCommand(() -> {
-                    intake.setPower(0);
-                    intake.setMinPower(0);
-                })
-        );
     }
     public static Command shoot(){
         AtomicBoolean usedTimeout = new AtomicBoolean(true);
         return new SequentialCommandGroup(
-                new WaitUntilCommand(() -> Mosby.shooter.controller.atSetPoint()),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 new InstantCommand(() -> {
-                  //  turret.enableAim = true;
                     shooter.openStopper();
-                    //shooter.raiseHood();
                 }),
 
         new ConditionalCommand(
                         new SequentialCommandGroup(
-                                new InstantCommand(() -> shooter.hitTransfer()),
-                                new WaitCommand(125),
-                                new InstantCommand(() -> shooter.downTransfer()),
-                                new WaitCommand(125),
-
                                 new InstantCommand(() -> {
-                                    intake.setPower(1);
+                                    intake.setPower(1,1);
                                     intake.setMinPower(1);
                                 }),
-                                new WaitCommand(150),
+                                new WaitCommand(300),
                                 new InstantCommand(() -> {
-                                    intake.setPower(0);
+                                    intake.setPower(0, 0);
                                     intake.setMinPower(0);
                                 })
                         ),
@@ -252,13 +197,13 @@ public class Mosby {
                     shooter.openStopper();
                 }),
 
-                new WaitUntilCommand(() -> Mosby.shooter.controller.atSetPoint()),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
 
                 new ConditionalCommand(
                         // TRUE branch
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> {
-                                    intake.setPower(1);
+                                    intake.setPower(1, 1);
                                     intake.setMinPower(1);
                                 }),
                                 new WaitCommand(100),
@@ -271,12 +216,10 @@ public class Mosby {
                                 }),
                                 new WaitCommand(130),
                                 new InstantCommand(() -> {
-                                    shooter.hitTransfer();
                                 }),
                                 new WaitCommand(100),
                                 new InstantCommand(() -> {
-                                    shooter.downTransfer();
-                                    intake.setPower(0);
+                                    intake.setPower(0, 0);
                                     intake.setMinPower(0);
                                 }),
                                 reset()
@@ -286,7 +229,7 @@ public class Mosby {
                         new InstantCommand(),
 
                         // condition
-                        () -> Mosby.shooter.controller.atSetPoint()
+                        () -> Lebruxon.shooter.controller.atSetPoint()
                 )
         );
     }

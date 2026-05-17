@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode.utils.subsystems;
 
-import static org.firstinspires.ftc.teamcode.utils.Mosby.matchState;
-import static org.firstinspires.ftc.teamcode.utils.Mosby.startPose;
-
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.follower.Follower;
@@ -11,7 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.teamcode.pedro.Constants;
-import org.firstinspires.ftc.teamcode.utils.Mosby;
+import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 import org.firstinspires.ftc.teamcode.utils.Storage;
 
 @Configurable
@@ -29,11 +26,11 @@ public class Drivetrain extends SubsystemBase {
 
     public void drive(Gamepad gamepad1) {
         double multiplier = gamepad1.left_bumper? slow : 1;
-        if(Storage.alliance == Mosby.Alliance.BLUE || Storage.alliance == Mosby.Alliance.BLUECLOSE || Storage.alliance == Mosby.Alliance.BLUESQ ) {
+        if(Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE || Storage.alliance == Lebruxon.Alliance.BLUESQ ) {
             follower.setTeleOpDrive(
                     gamepad1.left_stick_y,
                     gamepad1.left_stick_x,
-                    -gamepad1.right_stick_x*0.9,
+                    -gamepad1.right_stick_x*0.8,
                     false
             );
         }
@@ -41,7 +38,7 @@ public class Drivetrain extends SubsystemBase {
             follower.setTeleOpDrive(
                     -gamepad1.left_stick_y,
                     -gamepad1.left_stick_x,
-                    -gamepad1.right_stick_x*0.9,
+                    -gamepad1.right_stick_x*0.8,
                     false
             );
         }

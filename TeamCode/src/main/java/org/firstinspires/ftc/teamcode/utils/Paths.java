@@ -5,7 +5,6 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 
 public class Paths {
@@ -98,9 +97,9 @@ public class Paths {
 
 
 
-    public Paths(Follower follower, Mosby.Alliance alliance) {
-        startPose = Mosby.startPose;
-        if (alliance == Mosby.Alliance.RED || alliance == Mosby.Alliance.REDCLOSE) {
+    public Paths(Follower follower, Lebruxon.Alliance alliance) {
+        startPose = Lebruxon.startPose;
+        if (alliance == Lebruxon.Alliance.RED || alliance == Lebruxon.Alliance.REDCLOSE) {
             shootingPose = shootingPose.mirror();
             intakeGPP1Pose = intakeGPP1Pose.mirror();
             intakeGPP2Pose = intakeGPP2Pose.mirror();

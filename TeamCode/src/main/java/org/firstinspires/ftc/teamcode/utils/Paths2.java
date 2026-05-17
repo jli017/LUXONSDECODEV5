@@ -72,8 +72,8 @@ public class Paths2 {
     public Pose offhp1 = new Pose(10, 21, Math.toRadians(180));
     public Pose offhp2 = new Pose(15, 21, Math.toRadians(180));
 
-    public Paths2(Follower follower, Mosby.Alliance alliance) {
-        if (alliance == Mosby.Alliance.RED || alliance == Mosby.Alliance.REDCLOSE || alliance == Mosby.Alliance.REDSQ) {
+    public Paths2(Follower follower, Lebruxon.Alliance alliance) {
+        if (alliance == Lebruxon.Alliance.RED || alliance == Lebruxon.Alliance.REDCLOSE || alliance == Lebruxon.Alliance.REDSQ) {
 
             shootpre = shootpre.mirror();
             intake1 = intake1.mirror();
@@ -105,7 +105,7 @@ public class Paths2 {
         }
 
 
-        startPose = Mosby.startPose;
+        startPose = Lebruxon.startPose;
        // if (alliance == Mosby.Alliance.RED || alliance == Mosby.Alliance.REDCLOSE || alliance == Mosby.Alliance.REDSQ) {
 
 
