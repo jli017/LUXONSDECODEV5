@@ -4,17 +4,14 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.controller.PIDFController;
-import com.seattlesolvers.solverslib.util.MathUtils;
 
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 import org.firstinspires.ftc.teamcode.utils.Storage;
 
 @Configurable
-
 public class Turret extends SubsystemBase {
 
     // =========================
@@ -64,25 +61,37 @@ public class Turret extends SubsystemBase {
     // Hard Limits
     // =========================
 
+    // CCW = positive (Pedro standard)
+    // MAX_ANGLE: +240° CCW from home
+    // MIN_ANGLE: -70°  CW  from home
     private static final double MAX_ANGLE =
-            Math.toRadians(70.0);
+            Math.toRadians(240.0);
 
     private static final double MIN_ANGLE =
-            Math.toRadians(-240.0);
+            Math.toRadians(-70.0);
+
+    // Small buffer so we detect "at a limit" before
+    // physically hitting the hard stop.
+    private static final double LIMIT_BUFFER =
+            Math.toRadians(5.0);
 
     // =========================
     // Runtime State
     // =========================
 
-    // Robot-relative home angle
-    public static double homePos = Math.PI;
+    // Home = 0.0 in continuous encoder space
+    // (turret faces same direction as robot heading)
+    public static double homePos = 0.0;
 
     public boolean enableAim = true;
     public boolean AUTOenableAim = true;
 
-    private double filteredPower = 0;
+    // Whether the turret is currently executing a
+    // long-path wrap-around after hitting a limit.
+    private boolean isWrapping = false;
 
-    private double targetAngle = homePos;
+    // The last resolved continuous-space setpoint.
+    private double continuousTarget = homePos;
 
     // =========================
     // Constructor
@@ -103,7 +112,6 @@ public class Turret extends SubsystemBase {
                 DcMotorEx.RunMode.RUN_WITHOUT_ENCODER
         );
 
-        // You said these are correct
         leftServo.setDirection(CRServo.Direction.REVERSE);
         rightServo.setDirection(CRServo.Direction.REVERSE);
 
@@ -122,19 +130,15 @@ public class Turret extends SubsystemBase {
 
         controller.setP(p);
         controller.setD(d);
+        controller.setTolerance(Math.toRadians(toleranceDeg));
 
-        controller.setTolerance(
-                Math.toRadians(toleranceDeg)
-        );
+        double rawPos = getRawAngle();
+        Storage.turretAngle = rawPos;
 
-        // IMPORTANT:
-        // Use continuous raw angle directly.
-        // Do NOT wrap turret position.
-        double pos = getRawAngle();
+        // --- 1. Compute desired robot-relative direction ---
+        // wrapToPi result only — NOT used as PID setpoint directly.
 
-        Storage.turretAngle = pos;
-
-        double relativeAngle;
+        double desiredWrapped;
 
         if (enableAim) {
 
@@ -142,99 +146,159 @@ public class Turret extends SubsystemBase {
                     Lebruxon.drivetrain.follower.getPose();
 
             double dx =
-                    Lebruxon.goal.getX()
-                            - robotPose.getX();
+                    Lebruxon.goal.getX() - robotPose.getX();
 
             double dy =
-                    Lebruxon.goal.getY()
-                            - robotPose.getY();
+                    Lebruxon.goal.getY() - robotPose.getY();
 
-            // Field-relative target angle
             double fieldTargetAngle =
                     Math.atan2(dy, dx);
 
             double robotHeading =
                     Lebruxon.drivetrain.follower.getHeading();
 
-            // Robot-relative desired turret angle
-            relativeAngle =
+            desiredWrapped =
                     wrapToPi(fieldTargetAngle - robotHeading);
 
         } else {
-
-            relativeAngle = wrapToPi(homePos);
+            desiredWrapped = wrapToPi(homePos);
         }
 
-        // Convert wrapped target into the closest
-        // reachable continuous target.
+        // --- 2. Resolve into a legal continuous-space target ---
+        continuousTarget =
+                resolveTarget(desiredWrapped, rawPos);
 
-        //controller.setSetPoint(MathUtils.clamp(relativeAngle,Math.toRadians(-90),Math.toRadians(90)));
-        controller.setSetPoint(relativeAngle);
-        double power = controller.calculate(getRawAngle());
-        leftServo.setPower(power);
-        rightServo.setPower(power);
+        // --- 3. Hard clamp — never command past limits ---
+        double safeTarget =
+                clamp(continuousTarget, MIN_ANGLE, MAX_ANGLE);
+
+        // --- 4. Run PID in continuous space ---
+        controller.setSetPoint(safeTarget);
+        double power = controller.calculate(rawPos);
+        double clampedPower =
+                clamp(power, -maxPower, maxPower);
+
+        leftServo.setPower(clampedPower);
+        rightServo.setPower(clampedPower);
     }
 
     // =========================
-    // Continuous Target Solver
+    // Target Resolver
     // =========================
 
     /**
-     * desiredWrapped is in [-pi, pi]
-     * current is continuous encoder space
+     * Resolves the desired wrapped angle into a legal
+     * continuous-space setpoint with the following rules:
      *
-     * This finds the closest reachable target
-     * without violating hard limits.
+     * NORMAL (not wrapping, turret within limits):
+     *   - Project desiredWrapped into continuous space as the
+     *     candidate closest to currentRaw (short path).
+     *   - If that candidate is inside [MIN, MAX]: use it.
+     *   - If outside [MIN, MAX]: fall back to home (0.0).
+     *     Never cross a limit to chase the goal.
+     *
+     * WRAPPING (turret physically at or past a limit):
+     *   - The turret must spin back the long way.
+     *   - Continue auto-tracking: project desiredWrapped to
+     *     the far side so the setpoint moves with the goal
+     *     while unwinding.
+     *   - As soon as the short-path candidate re-enters
+     *     [MIN, MAX], exit wrap mode and take the short path.
      */
+    private double resolveTarget(double desiredWrapped,
+                                 double currentRaw) {
+
+        final double TWO_PI = 2.0 * Math.PI;
+
+        // Short-path candidate: the instance of desiredWrapped
+        // closest to currentRaw in continuous space.
+        double turns = Math.floor(currentRaw / TWO_PI);
+        double near = turns * TWO_PI + desiredWrapped;
+
+        if (near - currentRaw > Math.PI)  near -= TWO_PI;
+        if (near - currentRaw < -Math.PI) near += TWO_PI;
+
+        // Check if turret is physically at or past a limit.
+        boolean atMaxLimit =
+                currentRaw >= MAX_ANGLE - LIMIT_BUFFER;
+        boolean atMinLimit =
+                currentRaw <= MIN_ANGLE + LIMIT_BUFFER;
+
+        // --- Enter wrap mode if we've hit a limit ---
+        if (atMaxLimit || atMinLimit) {
+            isWrapping = true;
+        }
+
+        // --- Exit wrap mode if short path is legal again ---
+        if (isWrapping
+                && near >= MIN_ANGLE
+                && near <= MAX_ANGLE) {
+            isWrapping = false;
+        }
+
+        if (isWrapping) {
+            // Long-path candidate: one full revolution away
+            // in the direction back into the legal zone.
+            double far;
+            if (atMaxLimit || currentRaw > 0) {
+                // Hit the CCW (MAX) limit — wrap CW (subtract 2π)
+                far = near - TWO_PI;
+            } else {
+                // Hit the CW (MIN) limit — wrap CCW (add 2π)
+                far = near + TWO_PI;
+            }
+
+            // Clamp the far target to legal range so the PID
+            // always has a reachable goal during the unwrap.
+            return clamp(far, MIN_ANGLE, MAX_ANGLE);
+        }
+
+        // --- Normal mode ---
+        if (near >= MIN_ANGLE && near <= MAX_ANGLE) {
+            return near;
+        }
+
+        // Target is out of bounds — return to home.
+        return homePos;
+    }
 
     // =========================
     // Public Accessors
     // =========================
 
-    /**
-     * Continuous raw angle from encoder.
-     * NEVER wrapped.
-     */
+    /** Continuous raw angle from encoder. NEVER wrapped. */
     public double getRawAngle() {
-
         return -encoderMotor.getCurrentPosition()
                 / ticksPerRadian;
     }
 
-    /**
-     * Current turret angle in continuous space.
-     */
     public double getAngle() {
-
         return getRawAngle();
     }
 
-    /**
-     * Current target in continuous space.
-     */
     public double getTargetAngle() {
+        return continuousTarget;
+    }
 
-        return targetAngle;
+    public boolean isWrapping() {
+        return isWrapping;
     }
 
     // =========================
     // Utility
     // =========================
 
-
-
     public static double wrapToPi(double radians) {
-
         double twoPi = 2.0 * Math.PI;
-
         radians %= twoPi;
-
-        if (radians <= -Math.PI) {
-            radians += twoPi;
-        } else if (radians > Math.PI) {
-            radians -= twoPi;
-        }
-
+        if (radians <= -Math.PI) radians += twoPi;
+        else if (radians > Math.PI) radians -= twoPi;
         return radians;
+    }
+
+    private static double clamp(double val,
+                                double min,
+                                double max) {
+        return Math.max(min, Math.min(max, val));
     }
 }
