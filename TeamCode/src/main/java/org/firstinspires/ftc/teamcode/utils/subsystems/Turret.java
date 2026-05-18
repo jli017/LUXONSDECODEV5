@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.utils.subsystems;
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -75,7 +76,7 @@ public class Turret extends SubsystemBase {
     // =========================
 
     // Robot-relative home angle
-    public static double homePos = Math.PI;
+    public static double homePos = 0;
 
     public boolean enableAim = true;
     public boolean AUTOenableAim = true;
@@ -98,7 +99,9 @@ public class Turret extends SubsystemBase {
 
         encoderMotor =
                 hMap.get(DcMotorEx.class, "intake");
-
+        encoderMotor.setMode(
+                DcMotorEx.RunMode.STOP_AND_RESET_ENCODER
+        );
         encoderMotor.setMode(
                 DcMotorEx.RunMode.RUN_WITHOUT_ENCODER
         );
@@ -106,13 +109,13 @@ public class Turret extends SubsystemBase {
         // You said these are correct
         leftServo.setDirection(CRServo.Direction.REVERSE);
         rightServo.setDirection(CRServo.Direction.REVERSE);
+        encoderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         controller.setTolerance(
                 Math.toRadians(toleranceDeg)
         );
-
-        controller.reset();
     }
+
 
     // =========================
     // Update
@@ -127,9 +130,7 @@ public class Turret extends SubsystemBase {
                 Math.toRadians(toleranceDeg)
         );
 
-        // IMPORTANT:
-        // Use continuous raw angle directly.
-        // Do NOT wrap turret position.
+
         double pos = getRawAngle();
 
         Storage.turretAngle = pos;
@@ -158,15 +159,12 @@ public class Turret extends SubsystemBase {
 
             // Robot-relative desired turret angle
             relativeAngle =
-                    wrapToPi(fieldTargetAngle - robotHeading);
+                    wrapToPi((fieldTargetAngle - robotHeading));
 
         } else {
 
             relativeAngle = wrapToPi(homePos);
         }
-
-        // Convert wrapped target into the closest
-        // reachable continuous target.
 
         //controller.setSetPoint(MathUtils.clamp(relativeAngle,Math.toRadians(-90),Math.toRadians(90)));
         controller.setSetPoint(relativeAngle);
@@ -175,43 +173,19 @@ public class Turret extends SubsystemBase {
         rightServo.setPower(power);
     }
 
-    // =========================
-    // Continuous Target Solver
-    // =========================
 
-    /**
-     * desiredWrapped is in [-pi, pi]
-     * current is continuous encoder space
-     *
-     * This finds the closest reachable target
-     * without violating hard limits.
-     */
-
-    // =========================
-    // Public Accessors
-    // =========================
-
-    /**
-     * Continuous raw angle from encoder.
-     * NEVER wrapped.
-     */
     public double getRawAngle() {
 
-        return -encoderMotor.getCurrentPosition()
+        return encoderMotor.getCurrentPosition()
                 / ticksPerRadian;
     }
 
-    /**
-     * Current turret angle in continuous space.
-     */
+
     public double getAngle() {
 
         return getRawAngle();
     }
 
-    /**
-     * Current target in continuous space.
-     */
     public double getTargetAngle() {
 
         return targetAngle;
