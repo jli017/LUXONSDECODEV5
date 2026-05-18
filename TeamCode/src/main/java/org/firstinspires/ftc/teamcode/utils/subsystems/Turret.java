@@ -3,42 +3,37 @@ package org.firstinspires.ftc.teamcode.utils.subsystems;
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.controller.PIDFController;
+import com.seattlesolvers.solverslib.util.MathUtils;
 
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 import org.firstinspires.ftc.teamcode.utils.Storage;
 
 @Configurable
+
 public class Turret extends SubsystemBase {
 
     // =========================
     // Hardware
     // =========================
+
     public CRServo leftServo;
     public CRServo rightServo;
-
-    // Encoder motor ONLY for reading position
     public DcMotorEx encoderMotor;
 
     // =========================
-    // Encoder / gearing
+    // Encoder / Gearing
     // =========================
 
-    // Encoder CPR
     public static double encoderTicksPerRev = 8192.0;
 
-    // Turret gear ratio:
-    // turret pulley = 208mm
-    // encoder pulley = 71mm
-    //
-    // encoder spins faster than turret
+    // turret pulley = 208mm, encoder pulley = 71mm
     public static double gearRatio = 208.0 / 71.0;
 
-    // ticks per turret revolution
     public static double ticksPerTurretRev =
             encoderTicksPerRev * gearRatio;
 
@@ -46,147 +41,188 @@ public class Turret extends SubsystemBase {
             ticksPerTurretRev / (2.0 * Math.PI);
 
     // =========================
-    // PID
+    // PID Tuning
     // =========================
-    public static double p = 1.8;
-    public static double d = 0.03;
+
+    public static double p = 0.7;
+    public static double d = 0.09;
+
+    public static double kStatic = 0.025;
+
+    public static double maxPower = 0.55;
+
+    public static double toleranceDeg = 1.5;
+
+    public static double minOutput = 0.015;
+
+    public static double powerFilterGain = 0.22;
 
     public PIDFController controller =
             new PIDFController(p, 0, d, 0);
 
-    public double tolerance = Math.toRadians(2);
-
     // =========================
-    // Limits / wrapping
+    // Hard Limits
     // =========================
 
-    // Home is backwards
-    public double homePos = Math.PI;
+    private static final double MAX_ANGLE =
+            Math.toRadians(70.0);
 
-    // Prevent wire twisting
-    // turret will stay within [-PI, PI]
-    // and automatically reverse direction
-    public double minAngle = -2.0 * Math.PI;
-    public double maxAngle = 2.0 * Math.PI;
+    private static final double MIN_ANGLE =
+            Math.toRadians(-240.0);
 
     // =========================
-    // Auto aim
+    // Runtime State
     // =========================
-    public boolean enableAim = false;
-    public boolean AUTOenableAim = false;
 
-    // Desired angle
-    private double targetAngle = Math.PI;
+    // Robot-relative home angle
+    public static double homePos = Math.PI;
+
+    public boolean enableAim = true;
+    public boolean AUTOenableAim = true;
+
+    private double filteredPower = 0;
+
+    private double targetAngle = homePos;
+
+    // =========================
+    // Constructor
+    // =========================
 
     public Turret(HardwareMap hMap) {
 
-        leftServo = hMap.get(CRServo.class, "turretLeft");
-        rightServo = hMap.get(CRServo.class, "turretRight");
+        leftServo =
+                hMap.get(CRServo.class, "turretLeft");
 
-        encoderMotor = hMap.get(DcMotorEx.class, "intake");
+        rightServo =
+                hMap.get(CRServo.class, "turretRight");
 
-        encoderMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        encoderMotor =
+                hMap.get(DcMotorEx.class, "intake");
 
-        // Reverse one servo if mounted opposite
-        leftServo.setDirection(CRServo.Direction.FORWARD);
+        encoderMotor.setMode(
+                DcMotorEx.RunMode.RUN_WITHOUT_ENCODER
+        );
+
+        // You said these are correct
+        leftServo.setDirection(CRServo.Direction.REVERSE);
         rightServo.setDirection(CRServo.Direction.REVERSE);
 
-        controller.setTolerance(tolerance);
+        controller.setTolerance(
+                Math.toRadians(toleranceDeg)
+        );
 
-        targetAngle = homePos;
+        controller.reset();
     }
 
     // =========================
-    // Current turret angle
+    // Update
     // =========================
-    public double getAngle() {
-
-        double ticks = encoderMotor.getCurrentPosition();
-
-        // Convert encoder ticks -> turret radians
-        double angle = ticks / ticksPerRadian;
-
-        return wrapToPi(angle);
-    }
-
-    // =========================
-    // Smart shortest-path setAngle
-    // =========================
-    public void setAngle(double angle) {
-
-        angle = wrapToPi(angle);
-
-        double current = getAngle();
-
-        // shortest angular path
-        double delta = wrapToPi(angle - current);
-
-        targetAngle = current + delta;
-
-        // keep inside safe range
-        if (targetAngle > maxAngle) {
-            targetAngle -= 2.0 * Math.PI;
-        }
-
-        if (targetAngle < minAngle) {
-            targetAngle += 2.0 * Math.PI;
-        }
-
-        controller.setSetPoint(targetAngle);
-    }
 
     public void update() {
 
-        if (enableAim) {
-
-            Pose pos = Lebruxon.drivetrain.follower.getPose();
-
-            double deltaX = Lebruxon.goal.getX() - pos.getX();
-            double deltaY = Lebruxon.goal.getY() - pos.getY();
-
-            double fieldTargetAngle = Math.atan2(deltaY, deltaX);
-
-            double robotAngle =
-                    Lebruxon.drivetrain.follower.getHeading();
-
-            // turret-relative angle
-            double relativeAngle =
-                    wrapToPi(fieldTargetAngle - robotAngle);
-
-            setAngle(relativeAngle);
-
-        }
-         else {
-
-            setAngle(homePos);
-        }
-
-        // Update PID
         controller.setP(p);
         controller.setD(d);
 
-        double currentAngle = getAngle();
+        controller.setTolerance(
+                Math.toRadians(toleranceDeg)
+        );
 
-        Storage.turretAngle = currentAngle;
+        // IMPORTANT:
+        // Use continuous raw angle directly.
+        // Do NOT wrap turret position.
+        double pos = getRawAngle();
 
-        double power = controller.calculate(currentAngle);
+        Storage.turretAngle = pos;
 
-        // Clamp power
-        power = Math.max(-1.0, Math.min(1.0, power));
+        double relativeAngle;
 
-        // Stop if close enough
-        if (controller.atSetPoint()) {
-            power = 0;
+        if (enableAim) {
+
+            Pose robotPose =
+                    Lebruxon.drivetrain.follower.getPose();
+
+            double dx =
+                    Lebruxon.goal.getX()
+                            - robotPose.getX();
+
+            double dy =
+                    Lebruxon.goal.getY()
+                            - robotPose.getY();
+
+            // Field-relative target angle
+            double fieldTargetAngle =
+                    Math.atan2(dy, dx);
+
+            double robotHeading =
+                    Lebruxon.drivetrain.follower.getHeading();
+
+            // Robot-relative desired turret angle
+            relativeAngle =
+                    wrapToPi(fieldTargetAngle - robotHeading);
+
+        } else {
+
+            relativeAngle = wrapToPi(homePos);
         }
 
-        // Apply to BOTH servos
+        // Convert wrapped target into the closest
+        // reachable continuous target.
+
+        //controller.setSetPoint(MathUtils.clamp(relativeAngle,Math.toRadians(-90),Math.toRadians(90)));
+        controller.setSetPoint(relativeAngle);
+        double power = controller.calculate(getRawAngle());
         leftServo.setPower(power);
         rightServo.setPower(power);
     }
 
     // =========================
-    // Angle wrapping
+    // Continuous Target Solver
     // =========================
+
+    /**
+     * desiredWrapped is in [-pi, pi]
+     * current is continuous encoder space
+     *
+     * This finds the closest reachable target
+     * without violating hard limits.
+     */
+
+    // =========================
+    // Public Accessors
+    // =========================
+
+    /**
+     * Continuous raw angle from encoder.
+     * NEVER wrapped.
+     */
+    public double getRawAngle() {
+
+        return -encoderMotor.getCurrentPosition()
+                / ticksPerRadian;
+    }
+
+    /**
+     * Current turret angle in continuous space.
+     */
+    public double getAngle() {
+
+        return getRawAngle();
+    }
+
+    /**
+     * Current target in continuous space.
+     */
+    public double getTargetAngle() {
+
+        return targetAngle;
+    }
+
+    // =========================
+    // Utility
+    // =========================
+
+
+
     public static double wrapToPi(double radians) {
 
         double twoPi = 2.0 * Math.PI;

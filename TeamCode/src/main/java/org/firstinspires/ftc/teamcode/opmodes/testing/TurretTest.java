@@ -25,8 +25,8 @@ public class TurretTest extends OpMode {
     // Hardware
     // =========================================
 
-    public CRServo leftServo;
-    public CRServo rightServo;
+    public CRServo   leftServo;
+    public CRServo   rightServo;
     public DcMotorEx encoderMotor;
 
     // =========================================
@@ -45,6 +45,9 @@ public class TurretTest extends OpMode {
 
     private static final double MAX_ANGLE    = Math.toRadians(70.0);
     private static final double MIN_ANGLE    = Math.toRadians(-240.0);
+
+    // Trigger recovery this many degrees before the hard stop
+    private static final double LIMIT_BUFFER = Math.toRadians(1.0);
 
     // =========================================
     // PID Tuning
@@ -70,10 +73,9 @@ public class TurretTest extends OpMode {
         RECOVERING
     }
 
-    private TurretState turretState = TurretState.NORMAL;
-
-    private double recoveryTarget = 0;
-    private boolean recoveringCCW = false;
+    private TurretState turretState    = TurretState.NORMAL;
+    private double      recoveryTarget = 0;
+    private boolean     recoveringCCW  = false;
 
     // =========================================
     // Runtime State
@@ -84,11 +86,11 @@ public class TurretTest extends OpMode {
     public double targetAngle   = 0;
 
     // Debug
-    private double dbgFieldTarget   = 0;
-    private double dbgRelativeAngle = 0;
-    private double dbgAimOnLine     = 0;
-    private boolean dbgShortBlocked = false;
-    private double dbgPosWrapped    = 0;
+    private double  dbgFieldTarget   = 0;
+    private double  dbgRelativeAngle = 0;
+    private double  dbgAimOnLine     = 0;
+    private boolean dbgShortBlocked  = false;
+    private double  dbgPosWrapped    = 0;
 
     // =========================================
     // Init
@@ -97,8 +99,8 @@ public class TurretTest extends OpMode {
     @Override
     public void init() {
 
-        leftServo    = hardwareMap.get(CRServo.class, "turretLeft");
-        rightServo   = hardwareMap.get(CRServo.class, "turretRight");
+        leftServo    = hardwareMap.get(CRServo.class,   "turretLeft");
+        rightServo   = hardwareMap.get(CRServo.class,   "turretRight");
         encoderMotor = hardwareMap.get(DcMotorEx.class, "intake");
 
         encoderMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -131,9 +133,8 @@ public class TurretTest extends OpMode {
         // Filtered continuous angle
         // =========================================
 
-        filteredAngle =
-                filteredAngle * (1.0 - filterGain)
-                        + getAngle() * filterGain;
+        filteredAngle = filteredAngle * (1.0 - filterGain)
+                + getAngle()    * filterGain;
 
         double pos = filteredAngle;
 
@@ -148,49 +149,39 @@ public class TurretTest extends OpMode {
 
         double fieldTargetAngle = Math.atan2(dy, dx);
 
-        double relativeAngle =
-                wrapToPi(fieldTargetAngle - robotHeadingRad);
+        // Robot-relative aim angle in [-pi, pi]
+        double relativeAngle = wrapToPi(fieldTargetAngle - robotHeadingRad);
 
+        // Current position wrapped to [-pi, pi] — used only for delta math
         double posWrapped = wrapToPi(pos);
 
-        double shortDelta =
-                wrapToPi(relativeAngle - posWrapped);
+        // Shortest angular delta to the target
+        double shortDelta = wrapToPi(relativeAngle - posWrapped);
 
-        double longDelta =
-                shortDelta >= 0
-                        ? shortDelta - 2.0 * Math.PI
-                        : shortDelta + 2.0 * Math.PI;
+        // Longest delta is the other way around the circle
+        double longDelta = (shortDelta >= 0)
+                ? shortDelta - 2.0 * Math.PI
+                : shortDelta + 2.0 * Math.PI;
 
+        // Candidate targets in unwrapped encoder space
         double shortTarget = pos + shortDelta;
         double longTarget  = pos + longDelta;
 
-        boolean shortFits =
-                shortTarget >= MIN_ANGLE &&
-                        shortTarget <= MAX_ANGLE;
+        boolean shortFits = shortTarget >= MIN_ANGLE && shortTarget <= MAX_ANGLE;
+        boolean longFits  = longTarget  >= MIN_ANGLE && longTarget  <= MAX_ANGLE;
 
-        boolean longFits =
-                longTarget >= MIN_ANGLE &&
-                        longTarget <= MAX_ANGLE;
-
-        double aimOnLine;
+        double  aimOnLine;
         boolean shortBlocked;
 
         if (shortFits) {
-
-            aimOnLine = shortTarget;
+            aimOnLine    = shortTarget;
             shortBlocked = false;
-
         } else if (longFits) {
-
-            aimOnLine = longTarget;
+            aimOnLine    = longTarget;
             shortBlocked = true;
-
         } else {
-
-            aimOnLine =
-                    Math.max(MIN_ANGLE,
-                            Math.min(MAX_ANGLE, shortTarget));
-
+            // Neither fits — park on whichever limit shortTarget overshot
+            aimOnLine    = (shortTarget > MAX_ANGLE) ? MAX_ANGLE : MIN_ANGLE;
             shortBlocked = true;
         }
 
@@ -212,18 +203,15 @@ public class TurretTest extends OpMode {
 
                 double error = targetAngle - pos;
 
-                boolean atCWStop =
-                        pos >= MAX_ANGLE;
+                boolean nearCWLimit  = pos >= MAX_ANGLE - LIMIT_BUFFER;
+                boolean nearCCWLimit = pos <= MIN_ANGLE + LIMIT_BUFFER;
 
-                boolean atCCWStop =
-                        pos <= MIN_ANGLE;
-
-                if (atCWStop && error > 0) {
-
+                if (nearCWLimit && error > 0) {
+                    // Pinned at CW stop, target wants even more CW -> must unwind CCW
                     enterRecovery(pos, relativeAngle, true);
 
-                } else if (atCCWStop && error < 0) {
-
+                } else if (nearCCWLimit && error < 0) {
+                    // Pinned at CCW stop, target wants even more CCW -> must unwind CW
                     enterRecovery(pos, relativeAngle, false);
                 }
 
@@ -232,13 +220,15 @@ public class TurretTest extends OpMode {
 
             case RECOVERING: {
 
-                updateRecoveryTarget(pos, relativeAngle);
-
+                // Drive toward the fixed recovery target set at entry.
+                // Do NOT update recoveryTarget here — chasing a moving target
+                // during recovery causes overshoot and stale-target lock-up.
                 targetAngle = recoveryTarget;
 
-                if (Math.abs(targetAngle - pos)
-                        < Math.toRadians(toleranceDeg + 1.0)) {
-
+                // Exit as soon as the real goal is reachable on either path.
+                // No proximity check needed: NORMAL will immediately compute
+                // the correct aimOnLine on the very next frame.
+                if (shortFits || longFits) {
                     turretState = TurretState.NORMAL;
                     controller.reset();
                 }
@@ -270,14 +260,11 @@ public class TurretTest extends OpMode {
                 power += Math.signum(power) * kStatic;
             }
 
-            power =
-                    Math.max(-maxPower,
-                            Math.min(maxPower, power));
+            power = Math.max(-maxPower, Math.min(maxPower, power));
         }
 
-        filteredPower =
-                filteredPower * (1.0 - powerFilterGain)
-                        + power * powerFilterGain;
+        filteredPower = filteredPower * (1.0 - powerFilterGain)
+                + power         * powerFilterGain;
 
         if (Math.abs(filteredPower) < 0.01) {
             filteredPower = 0;
@@ -291,9 +278,9 @@ public class TurretTest extends OpMode {
         // =========================================
 
         telemetry.addLine("===== ROBOT =====");
-        telemetry.addData("Robot X", ROBOT_X);
-        telemetry.addData("Robot Y", ROBOT_Y);
-        telemetry.addData("Robot Heading", ROBOT_HEADING);
+        telemetry.addData("Robot X",        ROBOT_X);
+        telemetry.addData("Robot Y",        ROBOT_Y);
+        telemetry.addData("Robot Heading",  ROBOT_HEADING);
 
         telemetry.addLine();
 
@@ -304,116 +291,57 @@ public class TurretTest extends OpMode {
         telemetry.addLine();
 
         telemetry.addLine("===== TURRET =====");
-        telemetry.addData("State", turretState.name());
-        telemetry.addData("Recovering CCW", recoveringCCW);
-        telemetry.addData("Position Deg", Math.toDegrees(pos));
-        telemetry.addData("Pos Wrapped Deg", Math.toDegrees(dbgPosWrapped));
+        telemetry.addData("State",            turretState.name());
+        telemetry.addData("Recovering CCW",   recoveringCCW);
+        telemetry.addData("Position Deg",     Math.toDegrees(pos));
+        telemetry.addData("Pos Wrapped Deg",  Math.toDegrees(dbgPosWrapped));
         telemetry.addData("Field Target Deg", Math.toDegrees(dbgFieldTarget));
         telemetry.addData("Relative Aim Deg", Math.toDegrees(dbgRelativeAngle));
-        telemetry.addData("Short Blocked", dbgShortBlocked);
-        telemetry.addData("Aim On Line Deg", Math.toDegrees(dbgAimOnLine));
-        telemetry.addData("Target Deg", Math.toDegrees(targetAngle));
-        telemetry.addData("Error Deg", Math.toDegrees(error));
-        telemetry.addData("Raw Power", power);
-        telemetry.addData("Filtered Power", filteredPower);
-        telemetry.addData("Encoder Ticks", encoderMotor.getCurrentPosition());
-        telemetry.addData("CW Limit Deg", Math.toDegrees(MAX_ANGLE));
-        telemetry.addData("CCW Limit Deg", Math.toDegrees(MIN_ANGLE));
+        telemetry.addData("Short Blocked",    dbgShortBlocked);
+        telemetry.addData("Aim On Line Deg",  Math.toDegrees(dbgAimOnLine));
+        telemetry.addData("Recovery Target",  Math.toDegrees(recoveryTarget));
+        telemetry.addData("Target Deg",       Math.toDegrees(targetAngle));
+        telemetry.addData("Error Deg",        Math.toDegrees(error));
+        telemetry.addData("Raw Power",        power);
+        telemetry.addData("Filtered Power",   filteredPower);
+        telemetry.addData("Encoder Ticks",    encoderMotor.getCurrentPosition());
+        telemetry.addData("CW Limit Deg",     Math.toDegrees(MAX_ANGLE));
+        telemetry.addData("CCW Limit Deg",    Math.toDegrees(MIN_ANGLE));
 
         telemetry.update();
     }
 
     // =========================================
-    // Recovery Helpers
+    // Recovery Helper
     // =========================================
 
-    private void enterRecovery(
-            double pos,
-            double relativeAngle,
-            boolean goingCCW
-    ) {
+    /**
+     * Compute and latch a fixed recovery target in unwrapped encoder space.
+     *
+     * The target is the position the turret needs to reach so that the goal
+     * becomes reachable on the long-way-around path. It is set once and held
+     * fixed for the duration of recovery so the PID has a stable destination.
+     *
+     * @param pos           current unwrapped turret position (radians)
+     * @param relativeAngle robot-relative aim angle in [-pi, pi]
+     * @param goingCCW      true  -> unwind CCW (decreasing angle, toward MIN_ANGLE)
+     *                      false -> unwind CW  (increasing angle, toward MAX_ANGLE)
+     */
+    private void enterRecovery(double pos, double relativeAngle, boolean goingCCW) {
 
         turretState   = TurretState.RECOVERING;
         recoveringCCW = goingCCW;
-
         controller.reset();
 
-        double posWrapped = wrapToPi(pos);
+        // Shortest delta from current wrapped pos to relative aim
+        double delta = wrapToPi(relativeAngle - wrapToPi(pos));
 
-        double delta =
-                wrapToPi(relativeAngle - posWrapped);
+        // Force delta into the recovery direction (the long way around)
+        if ( goingCCW && delta > 0) delta -= 2.0 * Math.PI;
+        if (!goingCCW && delta < 0) delta += 2.0 * Math.PI;
 
-        // Force long-way path
-
-        if (goingCCW) {
-
-            if (delta > 0) {
-                delta -= 2.0 * Math.PI;
-            }
-
-        } else {
-
-            if (delta < 0) {
-                delta += 2.0 * Math.PI;
-            }
-        }
-
-        recoveryTarget = pos + delta;
-
-        recoveryTarget =
-                Math.max(MIN_ANGLE,
-                        Math.min(MAX_ANGLE, recoveryTarget));
-    }
-
-    private void updateRecoveryTarget(
-            double pos,
-            double relativeAngle
-    ) {
-
-        double posWrapped = wrapToPi(pos);
-
-        double delta =
-                wrapToPi(relativeAngle - posWrapped);
-
-        // Force same direction continuously
-
-        if (recoveringCCW) {
-
-            // force negative rotation
-            if (delta > 0) {
-                delta -= 2.0 * Math.PI;
-            }
-
-        } else {
-
-            // force positive rotation
-            if (delta < 0) {
-                delta += 2.0 * Math.PI;
-            }
-        }
-
-        double candidate = pos + delta;
-
-        candidate =
-                Math.max(MIN_ANGLE,
-                        Math.min(MAX_ANGLE, candidate));
-
-        // Never reverse direction during recovery
-
-        if (recoveringCCW) {
-
-            // CCW = decreasing angle
-            if (candidate <= pos) {
-                recoveryTarget = candidate;
-            }
-
-        } else {
-
-            // CW = increasing angle
-            if (candidate >= pos) {
-                recoveryTarget = candidate;
-            }
-        }
+        // Apply to unwrapped pos and clamp to legal range
+        recoveryTarget = Math.max(MIN_ANGLE, Math.min(MAX_ANGLE, pos + delta));
     }
 
     // =========================================
@@ -421,13 +349,13 @@ public class TurretTest extends OpMode {
     // =========================================
 
     public double getAngle() {
-
         double ticks = encoderMotor.getCurrentPosition();
-
-        return (ticks / ticksPerRadian)
-                + turretZeroOffset;
+        return (ticks / ticksPerRadian) + turretZeroOffset;
     }
 
+    /**
+     * Wraps an angle in radians to (-pi, pi].
+     */
     public static double wrapToPi(double radians) {
 
         double twoPi = 2.0 * Math.PI;

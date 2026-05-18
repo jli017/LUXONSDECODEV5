@@ -54,7 +54,6 @@ public class Shooter extends SubsystemBase {
     public Shooter(HardwareMap hMap) {
         shooter1 = new Motor(hMap, "shooterMotor", Motor.GoBILDA.BARE);
         shooter2 = new Motor(hMap, "shooterMotor2", Motor.GoBILDA.BARE);
-        //shooter1.setInverted(true);
         shooter1.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         shooter2.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
 
@@ -62,34 +61,32 @@ public class Shooter extends SubsystemBase {
         hood = new ServoEx(hMap, "HoodServo");
         stopper = new ServoEx(hMap, "StopperServo");
 
-        shooter1.setInverted(true);
+        shooter1.setInverted(false);
+        shooter2.setInverted(false);
         controller.setTolerance(TOLERANCE);
         controller.setSetPoint(0);
         lutVelocity.add(0, 1390);
-        lutVelocity.add(30.5, 1420);
-        lutVelocity.add(39.5, 1440);
-        lutVelocity.add(48.5, 1480);
-        lutVelocity.add(58.5, 1540);
-        lutVelocity.add(71.5, 1540);
-        lutVelocity.add(86.5, 1640);
-        lutVelocity.add(96.5, 1680);
-        lutVelocity.add(111.5, 1800);
-        lutVelocity.add(122.5, 1880);
-        lutVelocity.add(142.5, 1960);
-        lutVelocity.add(200, 2080);
+        lutVelocity.add(25, 1400);
+        lutVelocity.add(44.5, 1450);
+        lutVelocity.add(52.5, 1500);
+        lutVelocity.add(69, 1580);
+        lutVelocity.add(93, 1740);
+        lutVelocity.add(105.5, 1800);
+        lutVelocity.add(133, 1950);
+        lutVelocity.add(144.5, 2040);
+        lutVelocity.add(157.5, 2140);
 
-        lutHood.add(0, 0);
-        lutHood.add(30.5, 0);
-        lutHood.add(39.5, 0);
-        lutHood.add(48.5, 0.05);
-        lutHood.add(58.5, 0.1);
-        lutHood.add(71.5, 0.22);
-        lutHood.add(86.5, 0.26);
-        lutHood.add(96.5, 0.26);
-        lutHood.add(111.5, 0.28);
-        lutHood.add(122.5, 0.3);
-        lutHood.add(142.5, 0.33);
-        lutHood.add(200, 0.35);
+        lutHood.add(0, 0.6);
+        lutHood.add(25, 0.6);
+        lutHood.add(44.5, 0.23);
+        lutHood.add(52.5, 0.16);
+        lutHood.add(69, 0.1);
+        lutHood.add(93, 0.09);
+        lutHood.add(105.5, 0);
+        lutHood.add(133, 0);
+        lutHood.add(144.5, 0);
+        lutHood.add(157.5, 0);
+
         lutVelocity.createLUT();
         lutHood.createLUT();
         pos = Lebruxon.drivetrain.follower.getPose();
@@ -136,13 +133,13 @@ public class Shooter extends SubsystemBase {
     }
 
     public double getVelocity() {
-        return -shooter2.getCorrectedVelocity();
+        return shooter2.getCorrectedVelocity();
     }
 
     public void setPower(double power) {
         power = clamp(power, -1.0, 1.0);
-        shooter1.set(-power);
-        shooter2.set(power);
+        shooter1.set(power);
+        shooter2.set(-power);
     }
 
     public void autoPower(boolean shooterOn, boolean hoodOn) {
@@ -151,7 +148,7 @@ public class Shooter extends SubsystemBase {
         if (shooterOn) {
             controller.setP(P);
             controller.setF(F);
-            controller.setSetPoint(lutVelocity.get(distance) );
+            controller.setSetPoint(lutVelocity.get(distance));
         } else {
             controller.setSetPoint(0);
         }
