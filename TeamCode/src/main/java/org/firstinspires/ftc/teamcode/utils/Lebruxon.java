@@ -134,12 +134,13 @@ public class Lebruxon {
 
     public static InstantCommand reset() {
         return new InstantCommand(() -> {
-            turret.enableAim = true;
-            turret.AUTOenableAim = true;
+            turret.enableAim = false;
+            turret.AUTOenableAim = false;
             intake.setMinPower(0);
             shooter.controller.reset();
             shooter.autoPower(false, false);
             shooter.setVelocity(Shooter.idleVeloMultiplier );
+            shooter.closeStopper();
             shooter.resetHood();
         });
     }
