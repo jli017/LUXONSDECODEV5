@@ -4,6 +4,7 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.controller.PIDFController;
@@ -78,8 +79,8 @@ public class Turret extends SubsystemBase {
         encoderMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
         // Mirrored configuration so servos don't fight each other mechanically.
-        leftServo.setDirection(CRServo.Direction.FORWARD);
-        rightServo.setDirection(CRServo.Direction.FORWARD);
+        leftServo.setDirection(CRServo.Direction.REVERSE);
+        rightServo.setDirection(CRServo.Direction.REVERSE);
 
         controller.setTolerance(Math.toRadians(toleranceDeg));
         controller.reset();
@@ -100,7 +101,7 @@ public class Turret extends SubsystemBase {
         Storage.turretAngle = normalizedPos;
 
         // 2. Resolve Target Angle
-        if (enableAim || AUTOenableAim) {
+        if (enableAim) {
             Pose robotPose = Lebruxon.drivetrain.follower.getPose();
             double dx = Lebruxon.goalShooter.getX() - robotPose.getX();
             double dy = Lebruxon.goalShooter.getY() - robotPose.getY();
@@ -173,7 +174,7 @@ public class Turret extends SubsystemBase {
      */
     public double getNormalizedAngle() {
         int adjustedTicks = encoderMotor.getCurrentPosition() - Storage.turretEncoderOffset;
-        double rawRad = -adjustedTicks / ticksPerRadian;
+        double rawRad = adjustedTicks / ticksPerRadian;
         return wrapToTwoPi(rawRad);
     }
 
