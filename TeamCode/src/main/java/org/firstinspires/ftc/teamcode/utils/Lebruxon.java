@@ -25,6 +25,7 @@ public class Lebruxon {
         AUTO,
         TELEOP
     }
+
     public enum Alliance {
         RED,
         BLUE,
@@ -38,10 +39,10 @@ public class Lebruxon {
 
     public static final Pose BLUE_START_POSE = new Pose(56, 7, Math.toRadians(180));
     public static final Pose BLUE_SQ_START_POSE = new Pose(33, 135, Math.toRadians(90));
-    public static final Pose RED_SQ_START_POSE = new Pose(144-BLUE_SQ_START_POSE.getX(), BLUE_SQ_START_POSE.getY(), Math.toRadians(0));
+    public static final Pose RED_SQ_START_POSE = new Pose(144 - BLUE_SQ_START_POSE.getX(), BLUE_SQ_START_POSE.getY(), Math.toRadians(0));
     public static final Pose CLOSE_BLUE_START_POSE = new Pose(21, 123, Math.toRadians(144));
-    public static final Pose RED_START_POSE = new Pose(144-BLUE_START_POSE.getX(), BLUE_START_POSE.getY(), Math.toRadians(0));
-    public static final Pose CLOSE_RED_START_POSE = new Pose(144-CLOSE_BLUE_START_POSE.getX(), CLOSE_BLUE_START_POSE.getY(), Math.toRadians(36));
+    public static final Pose RED_START_POSE = new Pose(144 - BLUE_START_POSE.getX(), BLUE_START_POSE.getY(), Math.toRadians(0));
+    public static final Pose CLOSE_RED_START_POSE = new Pose(144 - CLOSE_BLUE_START_POSE.getX(), CLOSE_BLUE_START_POSE.getY(), Math.toRadians(36));
     public static final Vector2d BLUE_GOALPIDF = new Vector2d(15, 141);
     public static final Vector2d RED_GOALPIDF = new Vector2d(128, 141);
     public static final Vector2d BLUE_GOAL = new Vector2d(2, 144);
@@ -120,12 +121,10 @@ public class Lebruxon {
 
         CommandScheduler.getInstance().registerSubsystem(drivetrain, turret, intake, shooter);
 
-        CommandScheduler.getInstance().schedule(reset1());
-        turret.enableAim = false;
-
+        CommandScheduler.getInstance().schedule(turret.enableAim = true);
     }
 
-    public static void update(){
+    public static void update() {
         drivetrain.update();
         turret.update();
         intake.update();
@@ -134,24 +133,10 @@ public class Lebruxon {
 
     public static InstantCommand reset() {
         return new InstantCommand(() -> {
-            turret.enableAim = false;
-            turret.AUTOenableAim = false;
             intake.setMinPower(0);
             shooter.controller.reset();
             shooter.autoPower(false, false);
-            shooter.setVelocity(Shooter.idleVeloMultiplier );
-            shooter.closeStopper();
-            shooter.resetHood();
-        });
-    }
-    public static InstantCommand reset1() {
-        return new InstantCommand(() -> {
-            turret.enableAim = false;
-            turret.AUTOenableAim = false;
-            intake.setMinPower(0);
-            shooter.controller.reset();
-            shooter.autoPower(false, false);
-            shooter.setVelocity(Shooter.idleVeloMultiplier );
+            shooter.setVelocity(Shooter.idleVeloMultiplier);
             shooter.closeStopper();
             shooter.resetHood();
         });
@@ -159,8 +144,6 @@ public class Lebruxon {
 
     public static InstantCommand prime() {
         return new InstantCommand(() -> {
-            turret.enableAim = true;
-            turret.AUTOenableAim = true;
             //intake.setPower(0, 0);
             intake.setMinPower(0);
 
@@ -168,7 +151,8 @@ public class Lebruxon {
             shooter.autoPower(true, true); // ONLY place
         });
     }
-    public static Command shoot(){
+
+    public static Command shoot() {
         AtomicBoolean usedTimeout = new AtomicBoolean(true);
         return new SequentialCommandGroup(
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
@@ -176,10 +160,10 @@ public class Lebruxon {
                     shooter.openStopper();
                 }),
 
-        new ConditionalCommand(
+                new ConditionalCommand(
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> {
-                                    intake.setPower(1,1);
+                                    intake.setPower(1, 1);
                                     intake.setMinPower(1);
                                 }),
                                 new WaitCommand(300),
@@ -193,6 +177,7 @@ public class Lebruxon {
                 )
         );
     }
+
     public static Command shootWithIntake() {
         return new SequentialCommandGroup(
                 new InstantCommand(() -> {
@@ -236,32 +221,4 @@ public class Lebruxon {
         );
     }
 
-
-
-
-
-
-
-/**
-    public static Command shoot() {
-        return new InstantCommand(() -> {
-
-
-
-        });
-    }
- **/
-
-    public static SequentialCommandGroup shootOptimized() {
-        return new SequentialCommandGroup(
-                prime(),
-                shoot()
-               // prime(),
-                //shoot(),
-               // prime(),
-               // shoot(),
-                //new WaitUntilCommand(() -> Mosby.shooter.controller.atSetPoint()),
-               // reset()
-        );
-    };
 }

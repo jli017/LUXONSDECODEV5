@@ -50,7 +50,7 @@ public class TeleOp extends CommandOpMode {
 
         samai.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(() -> {
-                    if(Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUESQ) {
+                    if(Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE) {
                         Pose b = new Pose(135.5, 7.8125, Math.toRadians(90));
                         Lebruxon.drivetrain.follower.setPose(b);
                         Storage.pose = b;
@@ -80,7 +80,7 @@ public class TeleOp extends CommandOpMode {
             double pos = Lebruxon.turret.controller.getSetPoint();
             Lebruxon.turret.homePos = pos + increment;
         }));
-        jonathan.getGamepadButton(GamepadKeys.Button.START).whenPressed(new InstantCommand(() -> {
+        jonathan.getGamepadButton(GamepadKeys.Button.DPAD_UP).whenPressed(new InstantCommand(() -> {
             Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
         }));
     }

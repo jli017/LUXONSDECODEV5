@@ -46,15 +46,14 @@ public class Turret extends SubsystemBase {
 
     public PIDFController controller = new PIDFController(p, 0, d, 0);
 
-    // =========================
-    // Hard Limits
-    // =========================
+    // ===================================
+    // Hard Limits (Mapped 0 to 2PI Space)
+    // ===================================
 
-    // CCW = positive (Pedro standard)
-    // MAX_ANGLE: +240° CCW from home
-    // MIN_ANGLE: -70°  CW  from home
-    private static final double MAX_ANGLE = Math.toRadians(240.0);
-    private static final double MIN_ANGLE = Math.toRadians(-70.0);
+    // Safe Travel Region: Side A [0°, 240°] and Side B [290°, 360°]
+    // Prohibited Deadzone Region: (240°, 290°)
+    private static final double LOWER_DEADZONE = Math.toRadians(240.0);
+    private static final double UPPER_DEADZONE = Math.toRadians(290.0);
 
     // =========================
     // Runtime State
@@ -79,9 +78,8 @@ public class Turret extends SubsystemBase {
         encoderMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
         // Mirrored configuration so servos don't fight each other mechanically.
-        // Adjust which is FORWARD/REVERSE depending on your physical gearing meshing.
-        leftServo.setDirection(CRServo.Direction.REVERSE);
-        rightServo.setDirection(CRServo.Direction.REVERSE);
+        leftServo.setDirection(CRServo.Direction.FORWARD);
+        rightServo.setDirection(CRServo.Direction.FORWARD);
 
         controller.setTolerance(Math.toRadians(toleranceDeg));
         controller.reset();
@@ -97,11 +95,12 @@ public class Turret extends SubsystemBase {
         controller.setD(d);
         controller.setTolerance(Math.toRadians(toleranceDeg));
 
-        double rawPos = getRawAngle();
-        Storage.turretAngle = rawPos;
+        // 1. Get current position normalized strictly between 0 and 2PI
+        double normalizedPos = getNormalizedAngle();
+        Storage.turretAngle = normalizedPos;
 
-        // 1. Determine Target Angle
-        if (enableAim) {
+        // 2. Resolve Target Angle
+        if (enableAim || AUTOenableAim) {
             Pose robotPose = Lebruxon.drivetrain.follower.getPose();
             double dx = Lebruxon.goalShooter.getX() - robotPose.getX();
             double dy = Lebruxon.goalShooter.getY() - robotPose.getY();
@@ -109,35 +108,48 @@ public class Turret extends SubsystemBase {
             double fieldTargetAngle = Math.atan2(dy, dx);
             double robotHeading = Lebruxon.drivetrain.follower.getHeading();
 
-            // Get angle relative to the robot's front
-            double relativeAngle = wrapToPi(fieldTargetAngle - robotHeading);
+            // Calculate the raw relative target and wrap to [0, 2PI) space
+            double normalizedTarget = wrapToTwoPi(fieldTargetAngle - robotHeading);
 
-            // Shift negative angles that actually represent valid travel > 180 deg CCW
-            // (e.g., wrapToPi turns +200 deg into -160 deg. This moves it back to +200)
-            if (relativeAngle < MIN_ANGLE && (relativeAngle + 2.0 * Math.PI) <= MAX_ANGLE) {
-                relativeAngle += 2.0 * Math.PI;
-            }
-
-            // If the target is outside our hardware bounds, reset straight to 0
-            if (relativeAngle < MIN_ANGLE || relativeAngle > MAX_ANGLE) {
+            // If target falls inside off-limits zone, force return to home (0.0) until it leaves
+            if (normalizedTarget > LOWER_DEADZONE && normalizedTarget < UPPER_DEADZONE) {
                 currentTargetAngle = homePos;
             } else {
-                currentTargetAngle = relativeAngle;
+                currentTargetAngle = normalizedTarget;
             }
         } else {
-            // Default home position when aim is disabled
+            // Default home position when aiming is turned off / unavailable
             currentTargetAngle = homePos;
         }
 
-        // 2. Run PID
-        controller.setSetPoint(currentTargetAngle);
-        double power = controller.calculate(rawPos);
+        // ====================================================================
+        // 3. Virtual Linear Unrolling & Deadzone Blocking
+        // ====================================================================
 
-        // Apply friction feedforward ONLY if we are outside of the tolerance bounds
-        if (Math.abs(currentTargetAngle - rawPos) > Math.toRadians(toleranceDeg)) {
+        // Shifting our coordinate space by UPPER_DEADZONE (290°) places the
+        // forbidden deadzone at the very end of our 0 to 2PI data ribbon [310°, 360°].
+        // This converts our circular path problem into a completely linear one.
+        double shiftedCurrent = wrapToTwoPi(normalizedPos - UPPER_DEADZONE);
+        double shiftedTarget = wrapToTwoPi(currentTargetAngle - UPPER_DEADZONE);
+
+        // Calculate the linear scalar error. Because the deadzone bounds the edges
+        // of this shifted space, the shortest path is always the safe path.
+        double error = shiftedTarget - shiftedCurrent;
+
+        // Project the target back out into global PID setpoint space
+        double pidSetpoint = normalizedPos + error;
+
+        // ====================================================================
+        // 4. Run PID & Output Control
+        // ====================================================================
+        controller.setSetPoint(pidSetpoint);
+        double power = controller.calculate(normalizedPos);
+
+        // Apply friction feedforward only outside tolerance bounds
+        if (Math.abs(pidSetpoint - normalizedPos) > Math.toRadians(toleranceDeg)) {
             power += Math.signum(power) * kStatic;
         } else {
-            power = 0; // Turn off entirely when at the target
+            power = 0;
         }
 
         double clampedPower = clamp(power, -maxPower, maxPower);
@@ -155,12 +167,18 @@ public class Turret extends SubsystemBase {
     // Public Accessors
     // =========================
 
-    public double getRawAngle() {
-        return -encoderMotor.getCurrentPosition() / ticksPerRadian;
+    /**
+     * Returns the raw encoder orientation normalized strictly between 0 and 2PI.
+     * Handles negative raw positions from reverse rotation flawlessly.
+     */
+    public double getNormalizedAngle() {
+        int adjustedTicks = encoderMotor.getCurrentPosition() - Storage.turretEncoderOffset;
+        double rawRad = -adjustedTicks / ticksPerRadian;
+        return wrapToTwoPi(rawRad);
     }
 
     public double getAngle() {
-        return getRawAngle();
+        return getNormalizedAngle();
     }
 
     public double getTargetAngle() {
@@ -171,11 +189,12 @@ public class Turret extends SubsystemBase {
     // Utility
     // =========================
 
-    public static double wrapToPi(double radians) {
+    /**
+     * Wraps any angle into a strict positive range of [0, 2PI)
+     */
+    public static double wrapToTwoPi(double radians) {
         double wrapped = radians % (2.0 * Math.PI);
-        if (wrapped > Math.PI) {
-            wrapped -= 2.0 * Math.PI;
-        } else if (wrapped <= -Math.PI) {
+        if (wrapped < 0) {
             wrapped += 2.0 * Math.PI;
         }
         return wrapped;
