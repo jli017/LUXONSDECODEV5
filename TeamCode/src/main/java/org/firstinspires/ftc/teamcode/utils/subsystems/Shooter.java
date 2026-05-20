@@ -75,6 +75,7 @@ public class Shooter extends SubsystemBase {
         lutVelocity.add(133, 1950);
         lutVelocity.add(144.5, 2040);
         lutVelocity.add(157.5, 2140);
+        lutVelocity.add(200,2150);
 
         lutHood.add(0, 0.6);
         lutHood.add(25, 0.6);
@@ -86,6 +87,7 @@ public class Shooter extends SubsystemBase {
         lutHood.add(133, 0);
         lutHood.add(144.5, 0);
         lutHood.add(157.5, 0);
+        lutHood.add(200, 0);
 
         lutVelocity.createLUT();
         lutHood.createLUT();
