@@ -29,8 +29,8 @@ public class Shooter extends SubsystemBase {
     public PIDFController controller = new PIDFController(P, 0, D, F);
     public static double TOLERANCE = 50;
 
-    public static double STOPPER_OPEN = 0.1;
-    public static double STOPPER_CLOSED = 0.3;
+    public static double STOPPER_OPEN = 0.3;
+    public static double STOPPER_CLOSED = 0.1;
     public static double TRANSFER_UP = 0.85;
     public static double TRANSFER_DOWN = 0.5;
     public static double HOOD_MIN = 0;
