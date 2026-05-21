@@ -121,7 +121,6 @@ public class Lebruxon {
 
         CommandScheduler.getInstance().registerSubsystem(drivetrain, turret, intake, shooter);
 
-        turret.enableAim = true;
     }
 
     public static void update() {
