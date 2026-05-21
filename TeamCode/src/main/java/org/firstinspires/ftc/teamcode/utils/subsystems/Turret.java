@@ -55,6 +55,13 @@ public class Turret extends SubsystemBase {
     private static final double LOWER_DEADZONE = Math.toRadians(240.0);
     private static final double UPPER_DEADZONE = Math.toRadians(290.0);
 
+    // Hold positions 5° inside the safe zone so the turret always has
+    // enough error to overcome static friction and never strands itself
+    // right on the boundary where P output is near zero.
+    public static double deadzoneMarginDeg = 5.0;
+    private static double LOWER_HOLD;
+    private static double UPPER_HOLD;
+
     // =========================
     // Runtime State
     // =========================
@@ -91,6 +98,10 @@ public class Turret extends SubsystemBase {
 
         controller.setTolerance(Math.toRadians(toleranceDeg));
         controller.reset();
+
+        // Hold positions are 5° inside the safe zone on each side
+        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg); // 235°
+        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg); // 295°
     }
 
     // =========================
@@ -98,6 +109,10 @@ public class Turret extends SubsystemBase {
     // =========================
 
     public void update() {
+
+        // Recompute hold positions in case deadzoneMarginDeg was tuned at runtime
+        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
+        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
 
         // 1. Get current position normalized strictly between 0 and 2PI
         double normalizedPos = getNormalizedAngle();
@@ -112,16 +127,13 @@ public class Turret extends SubsystemBase {
         // ====================================================================
         // 2. Resolve Target Angle
         // ====================================================================
-        // If physically inside the deadzone, override target to the edge we
-        // entered from (based on lastSafeAngle) and fall through to the normal
-        // shift+PD loop — do NOT return early. A separate bare-P recovery
-        // controller produced sub-threshold power for small incursions and
-        // stalled the turret inside the deadzone. The full PD loop handles it
-        // correctly at all error magnitudes.
+        // If physically inside the deadzone, override target to the hold position
+        // on the side we entered from and fall through to the normal shift+PD loop.
+        // Using LOWER_HOLD / UPPER_HOLD instead of the exact boundary gives the
+        // PD controller a non-trivial error so it can overcome static friction and
+        // pull the turret back cleanly without stalling right on the boundary.
         if (normalizedPos > LOWER_DEADZONE && normalizedPos < UPPER_DEADZONE) {
-            // Retreat to the boundary on the side we came from.
-            currentTargetAngle = (lastSafeAngle <= LOWER_DEADZONE) ? LOWER_DEADZONE : UPPER_DEADZONE;
-            // Clear derivative state so there is no stale kick on re-entry.
+            currentTargetAngle = (lastSafeAngle <= LOWER_DEADZONE) ? LOWER_HOLD : UPPER_HOLD;
             lastError = 0;
 
         } else if (enableAim || AUTOenableAim) {
@@ -139,10 +151,10 @@ public class Turret extends SubsystemBase {
             // Calculate the raw relative target and wrap to [0, 2PI) space
             double normalizedTarget = wrapToTwoPi(fieldTargetAngle - robotHeading);
 
-            // If the computed target falls inside the deadzone, clamp to the boundary
-            // on the same side the turret is currently on — never the far edge.
+            // If the computed target falls inside the deadzone, clamp to the hold
+            // position on the same side the turret is currently on — never the far edge.
             if (normalizedTarget > LOWER_DEADZONE && normalizedTarget < UPPER_DEADZONE) {
-                currentTargetAngle = (normalizedPos <= LOWER_DEADZONE) ? LOWER_DEADZONE : UPPER_DEADZONE;
+                currentTargetAngle = (normalizedPos <= LOWER_DEADZONE) ? LOWER_HOLD : UPPER_HOLD;
             } else {
                 currentTargetAngle = normalizedTarget;
             }
@@ -189,12 +201,11 @@ public class Turret extends SubsystemBase {
 
         double derivative = error - lastError;
 
-        // Zero the derivative when settled at either deadzone boundary so the
-        // D term does not kick the turret back off the limit on the next tick,
-        // which was causing the jitter between limits.
-        boolean atDeadzoneBound = (Math.abs(normalizedPos - LOWER_DEADZONE) < toleranceRad)
-                || (Math.abs(normalizedPos - UPPER_DEADZONE) < toleranceRad);
-        if (atDeadzoneBound) {
+        // Zero the derivative when settled at either hold position so the
+        // D term does not kick the turret back off the limit on the next tick.
+        boolean atHoldPos = (Math.abs(normalizedPos - LOWER_HOLD) < toleranceRad)
+                || (Math.abs(normalizedPos - UPPER_HOLD) < toleranceRad);
+        if (atHoldPos) {
             derivative = 0;
         }
 
