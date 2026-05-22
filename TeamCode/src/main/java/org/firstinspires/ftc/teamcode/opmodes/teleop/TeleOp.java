@@ -26,7 +26,7 @@ public class TeleOp extends CommandOpMode {
 
         // FIX: enableAim was never set to true after the broken
         // CommandScheduler.schedule(turret.enableAim = true) line was removed.
-        Lebruxon.turret.enableAim = true;
+        Lebruxon.turret.enableAim = false;
 
         Lebruxon.update();
 

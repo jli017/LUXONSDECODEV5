@@ -40,8 +40,8 @@ public class Turret extends SubsystemBase {
     public static double d = 0.002;
 
     // Feedforward to overcome internal CR Servo friction
-    public static double maxPower = 0.75;
-    public static double toleranceDeg = 1.5;
+    public static double maxPower = 0.85;
+    public static double toleranceDeg = 0.5;
 
     public PIDFController controller = new PIDFController(p, 0, d, 0);
 
@@ -67,8 +67,8 @@ public class Turret extends SubsystemBase {
     // =========================
 
     public static double homePos = 0.0;
-    public boolean enableAim = false;
-    public boolean AUTOenableAim = false;
+    public boolean enableAim = true;
+    public boolean AUTOenableAim = true;
 
     private double currentTargetAngle = homePos;
 

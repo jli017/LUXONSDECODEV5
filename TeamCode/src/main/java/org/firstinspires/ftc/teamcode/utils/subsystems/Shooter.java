@@ -65,16 +65,16 @@ public class Shooter extends SubsystemBase {
         shooter2.setInverted(false);
         controller.setTolerance(TOLERANCE);
         controller.setSetPoint(0);
-        lutVelocity.add(0, 1390);
-        lutVelocity.add(25, 1400);
-        lutVelocity.add(44.5, 1450);
+        lutVelocity.add(0, 1400);
+        lutVelocity.add(25, 1430);
+        lutVelocity.add(44.5, 1480);
         lutVelocity.add(52.5, 1500);
         lutVelocity.add(69, 1580);
         lutVelocity.add(93, 1740);
-        lutVelocity.add(105.5, 1800);
-        lutVelocity.add(133, 1950);
-        lutVelocity.add(144.5, 2040);
-        lutVelocity.add(157.5, 2140);
+        lutVelocity.add(105.5, 1900);
+        lutVelocity.add(133, 2100);
+        lutVelocity.add(144.5, 2150);
+        lutVelocity.add(157.5, 2200);
 
         lutHood.add(0, 0.6);
         lutHood.add(25, 0.6);

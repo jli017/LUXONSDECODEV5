@@ -165,7 +165,7 @@ public class Lebruxon {
                                     intake.setPower(1, 1);
                                     intake.setMinPower(1);
                                 }),
-                                new WaitCommand(300),
+                                new WaitCommand(1500),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);
