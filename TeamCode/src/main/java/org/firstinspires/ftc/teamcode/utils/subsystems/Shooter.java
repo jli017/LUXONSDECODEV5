@@ -6,6 +6,7 @@ import static com.seattlesolvers.solverslib.util.MathUtils.clamp;
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.command.Robot;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.controller.PIDFController;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
@@ -25,12 +26,12 @@ public class Shooter extends SubsystemBase {
 
     public static double P = 0.001;//0.006 0.000389
     public static double D = 0.0;
-    public static double F =0.000385;//0.0008
+    public static double F = 0.000385;//0.0008
     public PIDFController controller = new PIDFController(P, 0, D, F);
     public static double TOLERANCE = 50;
 
-    public static double STOPPER_OPEN = 0.3;
-    public static double STOPPER_CLOSED = 0.1;
+    public static double STOPPER_OPEN = 0.35;
+    public static double STOPPER_CLOSED = 0.2;
     public static double TRANSFER_UP = 0.85;
     public static double TRANSFER_DOWN = 0.5;
     public static double HOOD_MIN = 0;
@@ -57,7 +58,6 @@ public class Shooter extends SubsystemBase {
         shooter1.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         shooter2.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
 
-
         hood = new ServoEx(hMap, "HoodServo");
         stopper = new ServoEx(hMap, "StopperServo");
 
@@ -65,29 +65,30 @@ public class Shooter extends SubsystemBase {
         shooter2.setInverted(false);
         controller.setTolerance(TOLERANCE);
         controller.setSetPoint(0);
-        lutVelocity.add(0, 1390);
-        lutVelocity.add(25, 1400);
-        lutVelocity.add(44.5, 1450);
-        lutVelocity.add(52.5, 1500);
-        lutVelocity.add(69, 1580);
-        lutVelocity.add(93, 1740);
-        lutVelocity.add(105.5, 1800);
-        lutVelocity.add(133, 1950);
-        lutVelocity.add(144.5, 2040);
-        lutVelocity.add(157.5, 2140);
-        lutVelocity.add(200,2150);
+        lutVelocity.add(0, 1360);
+        lutVelocity.add(29.7, 1440);
+        lutVelocity.add(42.7, 1480);
+        lutVelocity.add(57.7, 1580);
+        lutVelocity.add(73.2, 1700);
+        lutVelocity.add(87.7, 1860);
+        lutVelocity.add(105.2, 1920);
+        lutVelocity.add(109.25, 2040);
+        lutVelocity.add(118, 2080);
+        lutVelocity.add(122.5, 2120);
+        lutVelocity.add(200, 2200);
 
-        lutHood.add(0, 0.6);
-        lutHood.add(25, 0.6);
-        lutHood.add(44.5, 0.23);
-        lutHood.add(52.5, 0.16);
-        lutHood.add(69, 0.1);
-        lutHood.add(93, 0.09);
-        lutHood.add(105.5, 0);
-        lutHood.add(133, 0);
-        lutHood.add(144.5, 0);
-        lutHood.add(157.5, 0);
-        lutHood.add(200, 0);
+        lutHood.add(0, 1);
+        lutHood.add(29.7, 0.95);
+        lutHood.add(42.7, 0.85);
+        lutHood.add(57.7, 0.7);
+        lutHood.add(73.2, 0.66);
+        lutHood.add(87.7, 0.66);
+        lutHood.add(105.2, 0.6);
+        lutHood.add(109.25, 0.5);
+        lutHood.add(118, 0.5);
+        lutHood.add(122.5, 0.47);
+        lutHood.add(200, 0.47);
+
 
         lutVelocity.createLUT();
         lutHood.createLUT();
@@ -97,7 +98,8 @@ public class Shooter extends SubsystemBase {
 
 
         shooterBlah = false;
-        distance = Math.hypot(Lebruxon.goalShooter.getX()-Storage.pose.getX(), Lebruxon.goalShooter.getY()-Storage.pose.getY());
+        Pose ShooterRobotPose = Lebruxon.drivetrain.follower.getPose();
+        distance = Math.hypot(Lebruxon.goalShooter.getX()- ShooterRobotPose.getX(), Lebruxon.goalShooter.getY()-ShooterRobotPose.getY());
 
 
     }
@@ -170,7 +172,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void resetHood() {
-        setHoodPercent(0);
+        setHoodPercent(100);
     }
 
     public void raiseHood() {

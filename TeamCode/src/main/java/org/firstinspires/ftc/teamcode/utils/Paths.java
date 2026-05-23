@@ -91,7 +91,7 @@ public class Paths {
     public Pose CloseIntakePGPControl = new Pose(63, 53);
     public Pose CloseshootPGPPose = new Pose(53,100, Math.toRadians(200));
     public Pose CloseintakeGPP1Pose = new Pose(45,36, Math.toRadians(180));
-    public Pose CloseintakeGPP2Pose = new Pose(14,36, Math.toRadians(180));
+    public Pose CloseintakeGPP2Pose = new Pose(16,36, Math.toRadians(180));
     public Pose CloseShootGPPPose = new Pose(53,100,Math.toRadians(220));
     public Pose CloseparkPose = new Pose(31, 72, Math.toRadians(180));
 
@@ -212,7 +212,7 @@ public class Paths {
         intakePPG1 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierCurve(shootingPose, intakePPG1Pose)
+                        new BezierLine(shootingPose, intakePPG1Pose)
                 )
                 .setBrakingStrength(3.5)
 //                .setTimeoutConstraint(500)
@@ -329,7 +329,7 @@ public class Paths {
         shootpgp = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierCurve(intakepgp1Pose,shootpgpPose)
+                        new BezierLine(intakepgp1Pose,shootpgpPose)
                 )
                 .setBrakingStrength(3.5)
 //                .setTimeoutConstraint(500)

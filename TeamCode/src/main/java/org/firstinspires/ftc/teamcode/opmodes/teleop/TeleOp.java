@@ -12,6 +12,7 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 import org.firstinspires.ftc.teamcode.utils.Storage;
+import org.firstinspires.ftc.teamcode.utils.subsystems.Turret;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
 @Configurable
@@ -22,12 +23,16 @@ public class TeleOp extends CommandOpMode {
     @Override
     public void initialize() {
         Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
+
+        // FIX: enableAim was never set to true after the broken
+        // CommandScheduler.schedule(turret.enableAim = true) line was removed.
+        Lebruxon.turret.enableAim = false;
+
         Lebruxon.update();
 
         Command prime = Lebruxon.prime();
         Command shoot = Lebruxon.shoot();
         Command shootWithIntake = Lebruxon.shootWithIntake();
-
 
         GamepadEx samai = new GamepadEx(gamepad1);
         GamepadEx jonathan = new GamepadEx(gamepad2);
@@ -36,7 +41,7 @@ public class TeleOp extends CommandOpMode {
         samai.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(prime);
         samai.getGamepadButton(GamepadKeys.Button.CIRCLE)
-                .whenPressed( new SequentialCommandGroup(
+                .whenPressed(new SequentialCommandGroup(
                         new InstantCommand(() -> {
                             prime.cancel();
                             shoot.cancel();
@@ -46,43 +51,49 @@ public class TeleOp extends CommandOpMode {
                 ));
 
         samai.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(shoot);
+                .whenPressed(shootWithIntake);
 
         samai.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(() -> {
-                    if(Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE) {
+                    if (Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE) {
                         Pose b = new Pose(135.5, 7.8125, Math.toRadians(90));
                         Lebruxon.drivetrain.follower.setPose(b);
                         Storage.pose = b;
-
                     } else {
                         Pose r = new Pose(8.5, 7.8125, Math.toRadians(90));
                         Lebruxon.drivetrain.follower.setPose(r);
                         Storage.pose = r;
                     }
-                }) );
+                }));
 
         samai.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new InstantCommand(() -> {
-                    if (!Lebruxon.turret.enableAim) {
-                        Lebruxon.turret.enableAim = true;
-                    } else {
-                        Lebruxon.turret.enableAim = false;
-                    }
-                }) );
+                    Lebruxon.turret.enableAim = !Lebruxon.turret.enableAim;
+                }));
 
+        // FIX: homePos adjustments now use getNormalizedAngle() — always in [0, 2PI) —
+        // instead of controller.getSetPoint(), which was unbounded and corrupted homePos
+        // whenever pidSetpoint drifted outside the normalized range.
         jonathan.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT).whenPressed(new InstantCommand(() -> {
-            double pos = Lebruxon.turret.controller.getSetPoint();
-            Lebruxon.turret.homePos = pos - increment;
+            Lebruxon.turret.homePos = Turret.wrapToTwoPi(Lebruxon.turret.getNormalizedAngle() - increment);
         }));
 
         jonathan.getGamepadButton(GamepadKeys.Button.DPAD_LEFT).whenPressed(new InstantCommand(() -> {
-            double pos = Lebruxon.turret.controller.getSetPoint();
-            Lebruxon.turret.homePos = pos + increment;
+            Lebruxon.turret.homePos = Turret.wrapToTwoPi(Lebruxon.turret.getNormalizedAngle() + increment);
         }));
+
+        // FIX: Preserve enableAim across re-init so a DPAD_UP re-init doesn't silently
+        // reset turret state.
         jonathan.getGamepadButton(GamepadKeys.Button.DPAD_UP).whenPressed(new InstantCommand(() -> {
+            boolean savedAim = Lebruxon.turret.enableAim;
+            double savedHome = Lebruxon.turret.homePos;
             Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
+            Lebruxon.turret.enableAim = savedAim;
+            Lebruxon.turret.homePos = savedHome;
         }));
+
+        Lebruxon.shooter.resetHood();
+        Lebruxon.shooter.closeStopper();
     }
 
     public void run() {
@@ -94,19 +105,25 @@ public class TeleOp extends CommandOpMode {
 
         Lebruxon.intake.setPower(intakePower, transferPower);
 
-        telemetry.addData("error", Lebruxon.shooter.controller.getPositionError());
-        telemetry.addData("position", Lebruxon.drivetrain.follower.getPose().getX());
-        telemetry.addData("position", Lebruxon.drivetrain.follower.getPose().getY());
-        telemetry.addData("heading", Lebruxon.drivetrain.follower.getPose().getHeading());
-        telemetry.addData("goal", Lebruxon.goalShooter.getX());
-        telemetry.addData("goal", Lebruxon.goalShooter.getY());
-        telemetry.addData("distance", Lebruxon.shooter.distance);
-        telemetry.addData("ActualVelo", Lebruxon.shooter.controller.getSetPoint());
-        telemetry.addData("atSetPoint", Lebruxon.shooter.controller.atSetPoint());
-        telemetry.addData("velo", Lebruxon.shooter.getVelocity());
-        telemetry.addData("storage angle", Storage.turretAngle);
+        telemetry.addData("turret angle (deg)",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
+        telemetry.addData("turret target (deg)",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));
+        telemetry.addData("turret enableAim",     Lebruxon.turret.enableAim);
+        telemetry.addData("turret homePos (deg)", Math.toDegrees(Lebruxon.turret.homePos));
+        telemetry.addData("shooter error",        Lebruxon.shooter.controller.getPositionError());
+        telemetry.addData("robot x",              Lebruxon.drivetrain.follower.getPose().getX());
+        telemetry.addData("robot y",              Lebruxon.drivetrain.follower.getPose().getY());
+        telemetry.addData("heading (deg)",        Math.toDegrees(Lebruxon.drivetrain.follower.getPose().getHeading()));
+        telemetry.addData("goal x",               Lebruxon.goalShooter.getX());
+        telemetry.addData("goal y",               Lebruxon.goalShooter.getY());
+        telemetry.addData("distance",             Lebruxon.shooter.distance);
+        telemetry.addData("shooter setpoint",     Lebruxon.shooter.controller.getSetPoint());
+        telemetry.addData("shooter atSetPoint",   Lebruxon.shooter.controller.atSetPoint());
+        telemetry.addData("shooter velo",         Lebruxon.shooter.getVelocity());
+        telemetry.addData("turret pos deg",    Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
+        telemetry.addData("turret target deg", Math.toDegrees(Lebruxon.turret.getTargetAngle()));
+        telemetry.addData("inDeadzone",        Lebruxon.turret.getNormalizedAngle() > Math.toRadians(240) && Lebruxon.turret.getNormalizedAngle() < Math.toRadians(290));
+        telemetry.addData("approachFromLower", Lebruxon.turret.approachingFromLower);
+        telemetry.update();
         telemetry.update();
     }
-
-
 }
