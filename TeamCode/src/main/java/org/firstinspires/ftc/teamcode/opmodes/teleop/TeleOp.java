@@ -51,7 +51,7 @@ public class TeleOp extends CommandOpMode {
                 ));
 
         samai.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(shoot);
+                .whenPressed(shootWithIntake);
 
         samai.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(() -> {
@@ -119,6 +119,11 @@ public class TeleOp extends CommandOpMode {
         telemetry.addData("shooter setpoint",     Lebruxon.shooter.controller.getSetPoint());
         telemetry.addData("shooter atSetPoint",   Lebruxon.shooter.controller.atSetPoint());
         telemetry.addData("shooter velo",         Lebruxon.shooter.getVelocity());
+        telemetry.addData("turret pos deg",    Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
+        telemetry.addData("turret target deg", Math.toDegrees(Lebruxon.turret.getTargetAngle()));
+        telemetry.addData("inDeadzone",        Lebruxon.turret.getNormalizedAngle() > Math.toRadians(240) && Lebruxon.turret.getNormalizedAngle() < Math.toRadians(290));
+        telemetry.addData("approachFromLower", Lebruxon.turret.approachingFromLower);
+        telemetry.update();
         telemetry.update();
     }
 }

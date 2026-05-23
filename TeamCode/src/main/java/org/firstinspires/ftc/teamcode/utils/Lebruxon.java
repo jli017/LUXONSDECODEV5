@@ -43,8 +43,8 @@ public class Lebruxon {
     public static final Pose CLOSE_RED_START_POSE  = new Pose(144 - CLOSE_BLUE_START_POSE.getX(), CLOSE_BLUE_START_POSE.getY(), Math.toRadians(36));
     public static final Vector2d BLUE_GOALPIDF     = new Vector2d(15.5, 129);
     public static final Vector2d RED_GOALPIDF      = new Vector2d(128, 141);
-    public static final Vector2d BLUE_GOAL         = new Vector2d(0, 135);
-    public static final Vector2d RED_GOAL          = new Vector2d(144, 140);
+    public static final Vector2d BLUE_GOAL         = new Vector2d(0, 144);
+    public static final Vector2d RED_GOAL          = new Vector2d(144, 144);
 
     public static MatchState matchState;
     public static Alliance   alliance;
@@ -173,16 +173,21 @@ public class Lebruxon {
                 new ConditionalCommand(
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> {
-                                    intake.setPower(1, 1);
-                                    intake.setMinPower(1);
+                                    if(Lebruxon.shooter.distance>100) {
+                                        intake.setPower(0.65, 0.65);
+                                        intake.setMinPower(0.8);
+                                    } else {
+                                        intake.setPower(0.9, 0.9);
+                                        intake.setMinPower(0.95);
+                                    }
                                 }),
-                                new WaitCommand(100),
-                                new InstantCommand(() -> shooter.setCurrentHoodPercent(0.8)),
+                                new WaitCommand(80),
+                                new InstantCommand(() -> shooter.setCurrentHoodPercent(1.2)),
                                 new WaitCommand(150),
-                                new InstantCommand(() -> shooter.setCurrentHoodPercent(0.8)),
+                                new InstantCommand(() -> shooter.setCurrentHoodPercent(1.2)),
                                 new WaitCommand(130),
                                 new InstantCommand(() -> {}),
-                                new WaitCommand(100),
+                                new WaitCommand(500),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);
