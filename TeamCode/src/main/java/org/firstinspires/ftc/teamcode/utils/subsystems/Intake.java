@@ -1,12 +1,16 @@
 package org.firstinspires.ftc.teamcode.utils.subsystems;
 
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
 public class Intake extends SubsystemBase {
 
     public Motor intake, transfer;
+    public DistanceSensor distance;
 
     private static final double INTAKE_POWER = -1.0;
     private static final double OUTTAKE_POWER = 0.25;
@@ -18,6 +22,7 @@ public class Intake extends SubsystemBase {
     public Intake(HardwareMap hMap) {
         intake = new Motor(hMap, "intake");
         transfer = new Motor(hMap, "transfer");
+        distance = hMap.get(DistanceSensor.class, "distance");
 
         intake.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         transfer.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
@@ -63,6 +68,13 @@ public class Intake extends SubsystemBase {
             transfer.set(minPower);
         } else {
             transfer.set(transferPower);
+        }
+
+        double dist = distance.getDistance(DistanceUnit.CM);
+
+        if (dist < 3){
+            intake.set(minPower);
+            transfer.set(minPower);
         }
     }
 }

@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.utils.subsystems.Shooter;
 @Configurable
 public class VelocityTest extends CommandOpMode {
     Shooter shooter;
-    public static double hood;
+    public static double hood = 1;
     public static double velo = 0;
 
     public static double P = 0.001;

@@ -91,6 +91,9 @@ public class TeleOp extends CommandOpMode {
             Lebruxon.turret.enableAim = savedAim;
             Lebruxon.turret.homePos = savedHome;
         }));
+
+        Lebruxon.shooter.resetHood();
+        Lebruxon.shooter.closeStopper();
     }
 
     public void run() {
