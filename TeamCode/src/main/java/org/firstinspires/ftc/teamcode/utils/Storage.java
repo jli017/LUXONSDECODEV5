@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.utils;
 
 import com.pedropathing.geometry.Pose;
 
-public class Storage {
+public class    Storage {
     public static Pose pose = Lebruxon.BLUE_START_POSE;
 
     // Raw encoder ticks at the time the turret angle was last snapshotted.
