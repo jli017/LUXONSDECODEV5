@@ -27,7 +27,7 @@ public class Constants {
     public static PathConstraints pathConstraints = new PathConstraints(
             0.99,
             100,
-            0.38,//changed 0.38 is perfect 0.71 was the previous value
+            0.42,//changed 0.38 is perfect 0.71 was the previous value
              1
     );
 

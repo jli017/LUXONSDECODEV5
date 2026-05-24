@@ -41,7 +41,7 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakePGP1),
                     new WaitCommand(100),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
+                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn2),
 
 
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
@@ -56,9 +56,9 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                         Lebruxon.intake.setPower(1, 1);
                     }),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
-                    new WaitCommand(100),
+                    new WaitCommand(200),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                    new WaitCommand(1500),
+                    new WaitCommand(1000),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                   //  new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
 
@@ -75,11 +75,11 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                         Lebruxon.intake.setPower(1, 1);
                     }),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
-                    new WaitCommand(100),
+                    new WaitCommand(200),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                    new WaitCommand(1500),
+                    new WaitCommand(1000),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
-                    //new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
+                   // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
 
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
@@ -92,23 +92,23 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                         Lebruxon.drivetrain.follower.setMaxPower(1);
                         Lebruxon.intake.setPower(1, 1);
                     }),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
-                    new WaitCommand(100),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                    new WaitCommand(1500),
+                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG3),
+                    new WaitCommand(400),
+                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn3),
+                    new WaitCommand(1000),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
-                   // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
+                  //  new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
 
 
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
+                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG3),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                     Lebruxon.shootWithIntake(),
                     Lebruxon.reset(),
 
                     new InstantCommand(() -> {
-                        Lebruxon.drivetrain.follower.setMaxPower(0.85);
+                        Lebruxon.drivetrain.follower.setMaxPower(1);
                         Lebruxon.intake.setPower(1,1);
                     }),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakePPG),
