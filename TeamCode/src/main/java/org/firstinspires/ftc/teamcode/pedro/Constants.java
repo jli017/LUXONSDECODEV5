@@ -16,17 +16,19 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(10.6)
-            .forwardZeroPowerAcceleration(-51.349316)
-            .lateralZeroPowerAcceleration(-78.9356233449)
-            .headingPIDFCoefficients(new PIDFCoefficients(0.8, 0, 0.01, 0))
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.01, 0));
-
+            .mass(27)
+            .forwardZeroPowerAcceleration(-37.941610407041256)
+            .lateralZeroPowerAcceleration(-58.543698817487545)
+            .headingPIDFCoefficients(new PIDFCoefficients(0.55, 0, 0.01, 0.03))
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.15, 0, 0.01, 0.01))
+           // .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.007,0.0,0.00001,0.6,0.01))
+           // .centripetalScaling(0.00065)
+            ;
     public static PathConstraints pathConstraints = new PathConstraints(
             0.99,
             100,
-            0.4,
-            1
+            0.38,//changed 0.38 is perfect 0.71 was the previous value
+             1
     );
 
     public static Follower createFollower(HardwareMap hardwareMap) {
@@ -38,8 +40,8 @@ public class Constants {
     }
 
     public static MecanumConstants driveConstants = new MecanumConstants()
-            .xVelocity(69.10553266870694)
-            .yVelocity(54.13733246570496)
+            .xVelocity(88.9849159925566)
+            .yVelocity(64.74122343288633)
             .maxPower(1)
             .rightFrontMotorName("frontRightMotor")
             .rightRearMotorName("backRightMotor")
@@ -53,7 +55,7 @@ public class Constants {
             .useVoltageCompensation(false);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(1.85)
+            .forwardPodY(2.00748031)
             .strafePodX(-5.45)
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("pinpoint")

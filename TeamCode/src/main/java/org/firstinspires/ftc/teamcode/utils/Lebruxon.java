@@ -36,7 +36,7 @@ public class Lebruxon {
     }
 
     public static final Pose BLUE_START_POSE       = new Pose(53.8, 6.5, Math.toRadians(180));
-    public static final Pose BLUE_SQ_START_POSE    = new Pose(33, 135, Math.toRadians(90));
+    public static final Pose BLUE_SQ_START_POSE    = new Pose(31.25, 133.4, Math.toRadians(90));
     public static final Pose RED_SQ_START_POSE     = new Pose(144 - BLUE_SQ_START_POSE.getX(), BLUE_SQ_START_POSE.getY(), Math.toRadians(0));
     public static final Pose CLOSE_BLUE_START_POSE = new Pose(21, 123, Math.toRadians(144));
     public static final Pose RED_START_POSE        = new Pose(144 - BLUE_START_POSE.getX(), BLUE_START_POSE.getY(), Math.toRadians(0));
@@ -174,20 +174,20 @@ public class Lebruxon {
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> {
                                     if(Lebruxon.shooter.distance>100) {
-                                        intake.setPower(0.65, 0.65);
-                                        intake.setMinPower(0.8);
+                                        intake.setPower(0.65, (0.65));
+                                        intake.setMinPower(0.65);
                                     } else {
-                                        intake.setPower(0.9, 0.9);
-                                        intake.setMinPower(0.95);
+                                        intake.setPower(0.86, (0.86));
+                                        intake.setMinPower(0.86);
                                     }
                                 }),
                                 new WaitCommand(80),
-                                new InstantCommand(() -> shooter.setCurrentHoodPercent(1.2)),
+                                new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
                                 new WaitCommand(150),
-                                new InstantCommand(() -> shooter.setCurrentHoodPercent(1.2)),
+                                new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1f)),
                                 new WaitCommand(130),
                                 new InstantCommand(() -> {}),
-                                new WaitCommand(500),
+                                new WaitCommand(600),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);

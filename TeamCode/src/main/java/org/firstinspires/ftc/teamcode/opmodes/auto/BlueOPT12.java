@@ -34,7 +34,7 @@ public class BlueOPT12 extends CommandOpMode {
 
 
                 new InstantCommand(() -> {
-                    Lebruxon.drivetrain.follower.setMaxPower(0.8);
+                    Lebruxon.drivetrain.follower.setMaxPower(0.85);
                     Lebruxon.intake.setPower(1,1);
                 }),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakePPG),
