@@ -4,8 +4,13 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
+import com.seattlesolvers.solverslib.gamepad.GamepadEx;
+import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
+import org.firstinspires.ftc.teamcode.utils.Lebruxon;
+import org.firstinspires.ftc.teamcode.utils.Storage;
 import org.firstinspires.ftc.teamcode.utils.subsystems.Shooter;
 
 @TeleOp
@@ -22,25 +27,35 @@ public class VelocityTest extends CommandOpMode {
 
     @Override
     public void initialize() {
-        shooter = new Shooter(hardwareMap);
         tele = new JoinedTelemetry(PanelsTelemetry.INSTANCE.getFtcTelemetry(), telemetry);
+        Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
 
+        Lebruxon.shooter.resetHood();
+        Lebruxon.shooter.closeStopper();
 
+        Command shootWithIntake = Lebruxon.shootWithIntake();
+
+        GamepadEx samai = new GamepadEx(gamepad1);
+
+        samai.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(shootWithIntake);
+
+        Lebruxon.turret.enableAim = true;
     }
 
     @Override
     public void run() {
-        shooter.setHoodPercent(hood);
-        shooter.controller.setP(P);
-        shooter.controller.setF(F);
-        shooter.setVelocity(velo);
-        shooter.update();
+        Lebruxon.shooter.setHoodPercent(hood);
+        Lebruxon.shooter.setVelocity(velo);
+        Lebruxon.update();
 
-        tele.addData("velocity", shooter.shooter1.getCorrectedVelocity());
-        tele.addData("hoodPercent", shooter.hood.getRawPosition());
-        tele.addData("raw velocity", shooter.shooter1.encoder.getRawVelocity());
+        double intakePower = gamepad1.left_trigger;
+        double transferPower = gamepad1.right_trigger;
+
+        Lebruxon.intake.setPower(intakePower, transferPower);
+
+        tele.addData("velocity", Lebruxon.shooter.getVelocity());
         tele.addData("target", velo);
-        tele.addData("power", shooter.shooter2.get());
         tele.update();
     }
 }

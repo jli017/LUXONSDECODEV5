@@ -35,7 +35,7 @@ public class Lebruxon {
         REDSQ
     }
 
-    public static final Pose BLUE_START_POSE       = new Pose(53.8, 6.5, Math.toRadians(180));
+    public static final Pose BLUE_START_POSE       = new Pose(56, 8.5, Math.toRadians(180));
     public static final Pose BLUE_SQ_START_POSE    = new Pose(31.25, 133.4, Math.toRadians(90));
     public static final Pose RED_SQ_START_POSE     = new Pose(144 - BLUE_SQ_START_POSE.getX(), BLUE_SQ_START_POSE.getY(), Math.toRadians(0));
     public static final Pose CLOSE_BLUE_START_POSE = new Pose(21, 123, Math.toRadians(144));
@@ -45,6 +45,10 @@ public class Lebruxon {
     public static final Vector2d RED_GOALPIDF      = new Vector2d(128, 141);
     public static final Vector2d BLUE_GOAL         = new Vector2d(0, 144);
     public static final Vector2d RED_GOAL          = new Vector2d(144, 144);
+    public static final Vector2d BLUE_GOAL_CLOSE         = new Vector2d(6, 131);
+    public static final Vector2d RED_GOAL_CLOSE          = new Vector2d(138, 131);
+    public static final Vector2d BLUE_GOAL_FAR         = new Vector2d(13, 141);
+    public static final Vector2d RED_GOAL_FAR         = new Vector2d(131, 141);
 
     public static MatchState matchState;
     public static Alliance   alliance;
@@ -55,6 +59,9 @@ public class Lebruxon {
     public static Pose       startPose;
     public static Vector2d   goal;
     public static Vector2d   goalShooter;
+    public static Vector2d targetClose;
+    public static Vector2d targetFar;
+
 
     public static int    failsafeDelay      = 100;
     public static int    flywheelThreshhold = 100;
@@ -71,31 +78,43 @@ public class Lebruxon {
                 Lebruxon.startPose   = RED_START_POSE;
                 Lebruxon.goal        = RED_GOAL;
                 Lebruxon.goalShooter = RED_GOALPIDF;
+                Lebruxon.targetClose = RED_GOAL_CLOSE;
+                Lebruxon.targetFar = RED_GOAL_FAR;
                 break;
             case BLUE:
                 Lebruxon.startPose   = BLUE_START_POSE;
                 Lebruxon.goal        = BLUE_GOAL;
                 Lebruxon.goalShooter = BLUE_GOALPIDF;
+                Lebruxon.targetClose = BLUE_GOAL_CLOSE;
+                Lebruxon.targetFar = BLUE_GOAL_FAR;
                 break;
             case REDCLOSE:
                 Lebruxon.startPose   = CLOSE_RED_START_POSE;
                 Lebruxon.goal        = RED_GOAL;
                 Lebruxon.goalShooter = RED_GOALPIDF;
+                Lebruxon.targetClose = RED_GOAL_CLOSE;
+                Lebruxon.targetFar = RED_GOAL_FAR;
                 break;
             case BLUECLOSE:
                 Lebruxon.startPose   = CLOSE_BLUE_START_POSE;
                 Lebruxon.goal        = BLUE_GOAL;
                 Lebruxon.goalShooter = BLUE_GOALPIDF;
+                Lebruxon.targetClose = BLUE_GOAL_CLOSE;
+                Lebruxon.targetFar = BLUE_GOAL_FAR;
                 break;
             case BLUESQ:
                 Lebruxon.startPose   = BLUE_SQ_START_POSE;
                 Lebruxon.goal        = BLUE_GOAL;
                 Lebruxon.goalShooter = BLUE_GOALPIDF;
+                Lebruxon.targetClose = BLUE_GOAL_CLOSE;
+                Lebruxon.targetFar = BLUE_GOAL_FAR;
                 break;
             case REDSQ:
                 Lebruxon.startPose   = RED_SQ_START_POSE;
                 Lebruxon.goal        = RED_GOAL;
                 Lebruxon.goalShooter = RED_GOALPIDF;
+                Lebruxon.targetClose = RED_GOAL_CLOSE;
+                Lebruxon.targetFar = RED_GOAL_FAR;
                 break;
         }
 
@@ -174,7 +193,7 @@ public class Lebruxon {
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> {
                                     if(Lebruxon.shooter.distance>100) {
-                                        intake.setPower(0.65, (0.65));
+                                        intake.setPower(0.75, (0.75));
                                         intake.setMinPower(0.65);
                                     } else {
                                         intake.setPower(0.86, (0.86));
@@ -184,7 +203,7 @@ public class Lebruxon {
                                 new WaitCommand(80),
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
                                 new WaitCommand(150),
-                                new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1f)),
+                                new InstantCommand(() -> shooter.setCurrentHoodPercent(0.9)),
                                 new WaitCommand(130),
                                 new InstantCommand(() -> {}),
                                 new WaitCommand(600),

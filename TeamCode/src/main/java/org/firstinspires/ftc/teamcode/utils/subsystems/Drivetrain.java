@@ -28,16 +28,16 @@ public class Drivetrain extends SubsystemBase {
         double multiplier = gamepad1.left_bumper? slow : 1;
         if(Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE || Storage.alliance == Lebruxon.Alliance.BLUESQ ) {
             follower.setTeleOpDrive(
-                    gamepad1.left_stick_y*0.4,
-                    gamepad1.left_stick_x*0.4,
+                    gamepad1.left_stick_y*0.9,
+                    gamepad1.left_stick_x*0.9,
                     -gamepad1.right_stick_x*0.8,
                     false
             );
         }
         else {
             follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y*0.4,
-                    -gamepad1.left_stick_x*0.4,
+                    -gamepad1.left_stick_y*0.9,
+                    -gamepad1.left_stick_x*0.9,
                     -gamepad1.right_stick_x*0.8,
                     false
             );

@@ -72,9 +72,9 @@ public class Intake extends SubsystemBase {
 
         double dist = distance.getDistance(DistanceUnit.CM);
 
-        if (dist < 3){
-            intake.set(minPower);
-            transfer.set(minPower);
-        }
+//        if (dist < 3){
+//            intake.set(minPower);
+//            transfer.set(minPower);
+//        }
     }
 }

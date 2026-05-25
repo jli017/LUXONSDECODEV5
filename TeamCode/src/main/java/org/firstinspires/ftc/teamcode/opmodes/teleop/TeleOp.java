@@ -100,10 +100,16 @@ public class TeleOp extends CommandOpMode {
         super.run();
         Lebruxon.update();
         Lebruxon.drivetrain.drive(gamepad1);
-        double intakePower = gamepad1.left_trigger;
-        double transferPower = gamepad1.right_trigger;
 
-        Lebruxon.intake.setPower(intakePower, transferPower);
+        if (!gamepad1.cross) {
+            double intakePower = gamepad1.left_trigger;
+            double transferPower = gamepad1.right_trigger;
+
+            Lebruxon.intake.setPower(intakePower, transferPower);
+        }
+        else {
+            Lebruxon.intake.setPower(-0.8, -0.8);
+        }
 
         telemetry.addData("turret angle (deg)",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
         telemetry.addData("turret target (deg)",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));

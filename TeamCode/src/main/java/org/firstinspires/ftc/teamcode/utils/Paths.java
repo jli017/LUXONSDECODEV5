@@ -104,17 +104,17 @@ public class Paths {
     public Pose CloseintakeGPP2Pose = new Pose(14,36, Math.toRadians(180));
     public Pose CloseShootGPPPose = new Pose(53,100,Math.toRadians(190));
 
-    public Pose CloseIntakeG1Pose = new Pose(16,63,Math.toRadians(170));
-    public Pose CloseIntakeG3Pose = new Pose(16,66,Math.toRadians(170));
+    public Pose CloseIntakeG1Pose = new Pose(17,63,Math.toRadians(170));
+    public Pose CloseIntakeG3Pose = new Pose(17,66,Math.toRadians(170));
 
-    public Pose CloseIntakeG1Pose2 = new Pose(14.5,58,Math.toRadians(146));
-    public Pose CloseIntakeG3Pose2 = new Pose(14.5,59,Math.toRadians(146));
+    public Pose CloseIntakeG1Pose2 = new Pose(11.5,58,Math.toRadians(146));
+    public Pose CloseIntakeG3Pose2 = new Pose(11.5,59,Math.toRadians(146));
 
     public Pose CloseShootG1Pose = new Pose(53,85,Math.toRadians(190));
 
     public Pose CloseShootG1Control= new Pose(49,63);
     //public Pose CloseIntakeGateTurn = new Pose(10,54,Math.toRadians(90));
-    public Pose CloseparkPose = new Pose(31, 72, Math.toRadians(180));
+    public Pose CloseparkPose = new Pose(60, 103, Math.toRadians(180));
 
 
 
@@ -486,18 +486,18 @@ public class Paths {
 
         ClosescoreGPP = follower
                 .pathBuilder()
-                .addPath(new BezierLine(CloseintakeGPP2Pose, CloseShootGPPPose))
+                .addPath(new BezierLine(CloseintakeGPP2Pose, CloseparkPose))
                 .setLinearHeadingInterpolation(CloseintakeGPP2Pose.getHeading(), CloseShootGPPPose.getHeading())
                 .setBrakingStrength(0.42)
                 .build();
 
 
-        Closepark = follower
-                .pathBuilder()
-                .addPath(new BezierLine(CloseShootGPPPose, CloseparkPose))
-                .setLinearHeadingInterpolation(CloseShootGPPPose.getHeading(), CloseparkPose.getHeading())
-                .setBrakingStrength(0.42)
-                .build();
+       // Closepark = follower
+        //.pathBuilder()
+                //.addPath(new BezierLine(CloseShootGPPPose, CloseparkPose))
+                //.setLinearHeadingInterpolation(CloseShootGPPPose.getHeading(), CloseparkPose.getHeading())
+                //.setBrakingStrength(0.42)
+               // .build();
 
 
         //Blue 18th

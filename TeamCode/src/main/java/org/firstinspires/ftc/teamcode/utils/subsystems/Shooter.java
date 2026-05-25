@@ -31,7 +31,7 @@ public class Shooter extends SubsystemBase {
     public static double TOLERANCE = 80;
 
     public static double STOPPER_OPEN = 0.35;
-    public static double STOPPER_CLOSED = 0.2;
+    public static double STOPPER_CLOSED = 0.1;
     public static double TRANSFER_UP = 0.85;
     public static double TRANSFER_DOWN = 0.5;
     public static double HOOD_MIN = 0;
@@ -74,8 +74,8 @@ public class Shooter extends SubsystemBase {
         lutVelocity.add(105.2, 1920);
         lutVelocity.add(109.25, 2040);
         lutVelocity.add(118, 2080);
-        lutVelocity.add(122.5, 2120);
-        lutVelocity.add(200, 2200);
+        lutVelocity.add(122.5, 2100);
+        lutVelocity.add(200, 2180);
 
         lutHood.add(0, 1);
         lutHood.add(29.7, 0.95);
@@ -100,14 +100,13 @@ public class Shooter extends SubsystemBase {
         shooterBlah = false;
         Pose ShooterRobotPose = Lebruxon.drivetrain.follower.getPose();
         distance = Math.hypot(Lebruxon.goalShooter.getX()- ShooterRobotPose.getX(), Lebruxon.goalShooter.getY()-ShooterRobotPose.getY());
-
-
     }
 
     public void update() {
         if (!shooterBlah) {
             controller.setSetPoint(0);
             setPower(0);
+            hood.set(1);
             return;
         }
         pos = Lebruxon.drivetrain.follower.getPose();
@@ -120,8 +119,9 @@ public class Shooter extends SubsystemBase {
         double currentVelocity = getVelocity();
         double targetVelocity = lutVelocity.get(distance);
 
-        controller.setSetPoint(targetVelocity);
+        controller.setSetPoint(targetVelocity); //PUT THIS BACK AFTER LUT
 
+        hood.set(lutHood.get(distance)); //PUT THIS BACK AFTER LUT
         power = controller.calculate(currentVelocity);
         setPower(power);
     }
@@ -148,6 +148,13 @@ public class Shooter extends SubsystemBase {
 
     public void autoPower(boolean shooterOn, boolean hoodOn) {
         shooterBlah = shooterOn;
+
+        pos = Lebruxon.drivetrain.follower.getPose();
+
+        distance = Math.hypot(
+                Lebruxon.goalShooter.getX() - pos.getX(),
+                Lebruxon.goalShooter.getY() - pos.getY()
+        );
 
         if (shooterOn) {
             controller.setP(P);

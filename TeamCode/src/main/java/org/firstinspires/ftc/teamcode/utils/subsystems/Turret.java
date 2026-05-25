@@ -435,9 +435,18 @@ public class Turret extends SubsystemBase {
             currentTargetAngle = approachingFromLower ? LOWER_HOLD : UPPER_HOLD;
 
         } else if (enableAim || AUTOenableAim) {
+            double dx, dy;
+
             Pose robotPose = Lebruxon.drivetrain.follower.getPose();
-            double dx = Lebruxon.goal.getX() - robotPose.getX();
-            double dy = Lebruxon.goal.getY() - robotPose.getY();
+
+            if (Lebruxon.shooter.distance > 100) {
+                dx = Lebruxon.targetFar.getX() - robotPose.getX();
+                dy = Lebruxon.targetFar.getY() - robotPose.getY();
+            }
+            else {
+                dx = Lebruxon.targetClose.getX() - robotPose.getX();
+                dy = Lebruxon.targetClose.getY() - robotPose.getY();
+            }
 
             double fieldTargetAngle = wrapToTwoPi(Math.atan2(dy, dx));
             double robotHeading     = wrapToTwoPi(Lebruxon.drivetrain.follower.getHeading());
