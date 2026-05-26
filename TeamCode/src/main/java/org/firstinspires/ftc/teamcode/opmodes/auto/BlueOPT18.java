@@ -60,9 +60,9 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                         Lebruxon.intake.setPower(1, 1);
                     }),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
-                    new WaitCommand(50),
+                    new WaitCommand(75),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                    new WaitCommand(600),
+                    new WaitCommand(1000),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                   //  new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
 
@@ -83,7 +83,7 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
                     new WaitCommand(75),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                    new WaitCommand(800),
+                    new WaitCommand(1000),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                    // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
                     Lebruxon.prime(),
@@ -102,7 +102,7 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG3),
                     new WaitCommand(75),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn3),
-                    new WaitCommand(800),
+                    new WaitCommand(1000),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                   //  new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
 

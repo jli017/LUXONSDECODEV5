@@ -31,7 +31,7 @@ public class Shooter extends SubsystemBase {
     public static double TOLERANCE = 80;
 
     public static double STOPPER_OPEN = 0.35;
-    public static double STOPPER_CLOSED = 0.1;
+    public static double STOPPER_CLOSED = 0.12;
     public static double TRANSFER_UP = 0.85;
     public static double TRANSFER_DOWN = 0.5;
     public static double HOOD_MIN = 0;
@@ -73,9 +73,9 @@ public class Shooter extends SubsystemBase {
         lutVelocity.add(78, 1740);
         lutVelocity.add(105.2, 1850);
         lutVelocity.add(109.25, 1980);
-        lutVelocity.add(118, 2000);
-        lutVelocity.add(122.5, 2040);
-        lutVelocity.add(200, 2100);
+        lutVelocity.add(118, 2020);
+        lutVelocity.add(122.5, 2080);
+        lutVelocity.add(200, 2160);
 
         lutHood.add(0, 1);
         lutHood.add(27.5, 1);
@@ -104,9 +104,27 @@ public class Shooter extends SubsystemBase {
 
     public void update() {
         if (!shooterBlah) {
-            controller.setSetPoint(0);
-            setPower(0);
-            hood.set(1);
+            pos = Lebruxon.drivetrain.follower.getPose();
+
+            distance = Math.hypot(
+                    Lebruxon.goalShooter.getX() - pos.getX(),
+                    Lebruxon.goalShooter.getY() - pos.getY()
+            );
+
+            double currentVelocity = getVelocity();
+            double targetVelocity;
+
+            if (distance < 100) {
+                targetVelocity = lutVelocity.get(distance);
+            }
+            else {
+                targetVelocity = 1500;
+            }
+
+            controller.setSetPoint(targetVelocity); //PUT THIS BACK AFTER LUT
+            hood.set(lutHood.get(distance)); //PUT THIS BACK AFTER LUT
+            power = controller.calculate(currentVelocity);
+            setPower(power);
             return;
         }
         pos = Lebruxon.drivetrain.follower.getPose();
@@ -149,23 +167,9 @@ public class Shooter extends SubsystemBase {
     public void autoPower(boolean shooterOn, boolean hoodOn) {
         shooterBlah = shooterOn;
 
-        pos = Lebruxon.drivetrain.follower.getPose();
-
-        distance = Math.hypot(
-                Lebruxon.goalShooter.getX() - pos.getX(),
-                Lebruxon.goalShooter.getY() - pos.getY()
-        );
-
         if (shooterOn) {
             controller.setP(P);
             controller.setF(F);
-            controller.setSetPoint(lutVelocity.get(distance));
-        } else {
-            controller.setSetPoint(0);
-        }
-
-        if (hoodOn) {
-            hood.set(lutHood.get(distance));
         }
     }
 

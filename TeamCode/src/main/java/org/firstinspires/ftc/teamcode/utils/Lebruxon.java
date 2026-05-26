@@ -42,13 +42,13 @@ public class Lebruxon {
     public static final Pose RED_START_POSE        = new Pose(144 - BLUE_START_POSE.getX(), BLUE_START_POSE.getY(), Math.toRadians(0));
     public static final Pose CLOSE_RED_START_POSE  = new Pose(144 - CLOSE_BLUE_START_POSE.getX(), CLOSE_BLUE_START_POSE.getY(), Math.toRadians(36));
     public static final Vector2d BLUE_GOALPIDF     = new Vector2d(15.5, 129);
-    public static final Vector2d RED_GOALPIDF      = new Vector2d(128, 141);
+    public static final Vector2d RED_GOALPIDF      = new Vector2d(128.5, 129);
     public static final Vector2d BLUE_GOAL         = new Vector2d(0, 144);
     public static final Vector2d RED_GOAL          = new Vector2d(144, 144);
-    public static final Vector2d BLUE_GOAL_CLOSE         = new Vector2d(6, 131);
-    public static final Vector2d RED_GOAL_CLOSE          = new Vector2d(138, 131);
-    public static final Vector2d BLUE_GOAL_FAR         = new Vector2d(13, 141);
-    public static final Vector2d RED_GOAL_FAR         = new Vector2d(131, 141);
+    public static final Vector2d BLUE_GOAL_CLOSE         = new Vector2d(7, 136);
+    public static final Vector2d RED_GOAL_CLOSE          = new Vector2d(137, 136);
+    public static final Vector2d BLUE_GOAL_FAR         = new Vector2d(5, 141);
+    public static final Vector2d RED_GOAL_FAR         = new Vector2d(139, 141);
 
     public static MatchState matchState;
     public static Alliance   alliance;
@@ -142,7 +142,7 @@ public class Lebruxon {
         return new InstantCommand(() -> {
             intake.setMinPower(0);
             shooter.controller.reset();
-            shooter.autoPower(false, false);
+            //shooter.autoPower(false, false);
             shooter.setVelocity(Shooter.idleVeloMultiplier);
             shooter.closeStopper();
             shooter.resetHood();
@@ -193,11 +193,11 @@ public class Lebruxon {
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> {
                                     if(Lebruxon.shooter.distance>100) {
-                                        intake.setPower(0.75, (0.75));
-                                        intake.setMinPower(0.65);
+                                        intake.setPower(0.85, 0.85);
+                                        intake.setMinPower(0.85);
                                     } else {
-                                        intake.setPower(0.86, (0.86));
-                                        intake.setMinPower(0.86);
+                                        intake.setPower(0.95, 0.95);
+                                        intake.setMinPower(0.95);
                                     }
                                 }),
                                 new WaitCommand(80),

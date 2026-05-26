@@ -19,6 +19,8 @@ public class Intake extends SubsystemBase {
     private double intakePower = 0.0;
     private double transferPower = 0.0;
 
+    public double dist;
+
     public Intake(HardwareMap hMap) {
         intake = new Motor(hMap, "intake");
         transfer = new Motor(hMap, "transfer");
@@ -70,11 +72,6 @@ public class Intake extends SubsystemBase {
             transfer.set(transferPower);
         }
 
-        double dist = distance.getDistance(DistanceUnit.CM);
-
-//        if (dist < 3){
-//            intake.set(minPower);
-//            transfer.set(minPower);
-//        }
+        dist = distance.getDistance(DistanceUnit.CM);
     }
 }

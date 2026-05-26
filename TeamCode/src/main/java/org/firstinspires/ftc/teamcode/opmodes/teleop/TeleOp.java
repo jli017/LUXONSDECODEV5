@@ -9,6 +9,7 @@ import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
+import static com.seattlesolvers.solverslib.util.MathUtils.clamp;
 
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 import org.firstinspires.ftc.teamcode.utils.Storage;
@@ -101,14 +102,24 @@ public class TeleOp extends CommandOpMode {
         Lebruxon.update();
         Lebruxon.drivetrain.drive(gamepad1);
 
-        if (!gamepad1.cross) {
-            double intakePower = gamepad1.left_trigger;
-            double transferPower = gamepad1.right_trigger;
+        double intakePower, transferPower;
 
+        if (!gamepad1.cross) {
+            if (gamepad1.right_trigger < 0.2 && gamepad1.left_trigger > 0.2) {
+                intakePower = gamepad1.left_trigger;
+                transferPower = gamepad1.right_trigger;
+            } else {
+                intakePower = gamepad1.right_trigger;
+                transferPower = gamepad1.right_trigger;
+            }
             Lebruxon.intake.setPower(intakePower, transferPower);
         }
         else {
             Lebruxon.intake.setPower(-0.8, -0.8);
+        }
+
+        if (Lebruxon.intake.dist < 2){
+            gamepad1.rumble(300);
         }
 
         telemetry.addData("turret angle (deg)",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));

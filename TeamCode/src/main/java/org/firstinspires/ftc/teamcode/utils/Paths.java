@@ -105,10 +105,10 @@ public class Paths {
     public Pose CloseShootGPPPose = new Pose(53,100,Math.toRadians(190));
 
     public Pose CloseIntakeG1Pose = new Pose(17,63,Math.toRadians(170));
-    public Pose CloseIntakeG3Pose = new Pose(17,66,Math.toRadians(170));
+    public Pose CloseIntakeG3Pose = new Pose(17,63,Math.toRadians(170));
 
     public Pose CloseIntakeG1Pose2 = new Pose(11.5,58,Math.toRadians(146));
-    public Pose CloseIntakeG3Pose2 = new Pose(11.5,59,Math.toRadians(146));
+    public Pose CloseIntakeG3Pose2 = new Pose(11.5,58,Math.toRadians(146));
 
     public Pose CloseShootG1Pose = new Pose(53,85,Math.toRadians(190));
 
@@ -153,9 +153,6 @@ public class Paths {
             CloseintakeGPP2Pose = CloseintakeGPP2Pose.mirror();
             CloseShootGPPPose = CloseShootGPPPose.mirror();
             CloseparkPose = CloseparkPose.mirror();
-           // CloseIntakeGateTurn = CloseIntakeGateTurn.mirror();
-
-
         }
         // farzone 12 ball
 

@@ -380,7 +380,7 @@ class ForwardVelocityTuner extends OpMode {
 
 
         if (!end) {
-            if (Math.abs(follower.getPose().getX()) > (DISTANCE + 72)) {
+            if (Math.abs(follower.getPose().getX()) > (DISTANCE + 96)) {
                 end = true;
                 stopRobot();
             } else {
@@ -487,7 +487,7 @@ class LateralVelocityTuner extends OpMode {
         draw();
 
         if (!end) {
-            if (Math.abs(follower.getPose().getY()) > (DISTANCE + 72)) {
+            if (Math.abs(follower.getPose().getY()) > (DISTANCE + 96)) {
                 end = true;
                 stopRobot();
             } else {
