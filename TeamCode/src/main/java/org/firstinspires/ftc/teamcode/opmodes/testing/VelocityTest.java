@@ -31,7 +31,7 @@ public class VelocityTest extends CommandOpMode {
         Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
 
         Lebruxon.shooter.resetHood();
-        Lebruxon.shooter.closeStopper();
+        Lebruxon.shooter.openStopper();
 
         Command shootWithIntake = Lebruxon.shootWithIntake();
 
@@ -47,6 +47,7 @@ public class VelocityTest extends CommandOpMode {
     public void run() {
         Lebruxon.shooter.setHoodPercent(hood);
         Lebruxon.shooter.setVelocity(velo);
+        Lebruxon.drivetrain.drive(gamepad1);
         Lebruxon.update();
 
         double intakePower = gamepad1.left_trigger;
