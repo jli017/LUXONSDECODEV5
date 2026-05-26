@@ -45,10 +45,10 @@ public class Lebruxon {
     public static final Vector2d RED_GOALPIDF      = new Vector2d(128.5, 129);
     public static final Vector2d BLUE_GOAL         = new Vector2d(0, 144);
     public static final Vector2d RED_GOAL          = new Vector2d(144, 144);
-    public static final Vector2d BLUE_GOAL_CLOSE         = new Vector2d(7, 136);
-    public static final Vector2d RED_GOAL_CLOSE          = new Vector2d(137, 136);
-    public static final Vector2d BLUE_GOAL_FAR         = new Vector2d(5, 141);
-    public static final Vector2d RED_GOAL_FAR         = new Vector2d(139, 141);
+    public static final Vector2d BLUE_GOAL_CLOSE         = new Vector2d(7, 138);
+    public static final Vector2d RED_GOAL_CLOSE          = new Vector2d(137, 138);
+    public static final Vector2d BLUE_GOAL_FAR         = new Vector2d(7, 141);
+    public static final Vector2d RED_GOAL_FAR         = new Vector2d(137, 141);
 
     public static MatchState matchState;
     public static Alliance   alliance;
@@ -206,7 +206,7 @@ public class Lebruxon {
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(0.9)),
                                 new WaitCommand(130),
                                 new InstantCommand(() -> {}),
-                                new WaitCommand(600),
+                                new WaitCommand(200),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);

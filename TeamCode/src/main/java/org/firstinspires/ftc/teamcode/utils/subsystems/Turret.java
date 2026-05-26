@@ -398,6 +398,138 @@ public class Turret extends SubsystemBase {
     // Update
     // =========================
 
+//    public void update() {
+//
+//        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
+//        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
+//
+//        double normalizedPos = getNormalizedAngle();
+//        Storage.turretAngle = normalizedPos;
+//
+//        // ====================================================================
+//        // 1. Hysteresis deadzone detection
+//        //
+//        // Enter latch the moment we cross into (240°, 290°).
+//        // Exit latch only once fully clear of LOWER_HOLD or UPPER_HOLD.
+//        // ====================================================================
+//        if (!inDeadzoneLatch) {
+//            if (normalizedPos > LOWER_DEADZONE && normalizedPos < UPPER_DEADZONE) {
+//                inDeadzoneLatch = true;
+//                approachingFromLower = (normalizedPos - LOWER_DEADZONE)
+//                        < (UPPER_DEADZONE - normalizedPos);
+//                lastError = 0.0;
+//            }
+//        } else {
+//            if (approachingFromLower && normalizedPos <= LOWER_HOLD) {
+//                inDeadzoneLatch = false;
+//            } else if (!approachingFromLower && normalizedPos >= UPPER_HOLD) {
+//                inDeadzoneLatch = false;
+//            }
+//        }
+//
+//        // ====================================================================
+//        // 2. Resolve Target Angle
+//        // ====================================================================
+//
+//        if (inDeadzoneLatch) {
+//            currentTargetAngle = approachingFromLower ? LOWER_HOLD : UPPER_HOLD;
+//
+//        } else if (enableAim || AUTOenableAim) {
+//            double dx, dy;
+//
+//            Pose robotPose = Lebruxon.drivetrain.follower.getPose();
+//
+//            if (Lebruxon.shooter.distance > 100) {
+//                dx = Lebruxon.targetFar.getX() - robotPose.getX();
+//                dy = Lebruxon.targetFar.getY() - robotPose.getY();
+//            }
+//            else {
+//                dx = Lebruxon.targetClose.getX() - robotPose.getX();
+//                dy = Lebruxon.targetClose.getY() - robotPose.getY();
+//            }
+//
+//            double fieldTargetAngle = wrapToTwoPi(Math.atan2(dy, dx));
+//            double robotHeading     = wrapToTwoPi(Lebruxon.drivetrain.follower.getHeading());
+//            double normalizedTarget = wrapToTwoPi(fieldTargetAngle - robotHeading);
+//
+//            if (normalizedTarget > LOWER_DEADZONE && normalizedTarget < UPPER_DEADZONE) {
+//                double distToLower = normalizedTarget - LOWER_DEADZONE;
+//                double distToUpper = UPPER_DEADZONE - normalizedTarget;
+//                currentTargetAngle = (distToLower <= distToUpper) ? LOWER_HOLD : UPPER_HOLD;
+//            } else {
+//                currentTargetAngle = normalizedTarget;
+//            }
+//
+//        } else {
+//            currentTargetAngle = homePos;
+//        }
+//
+//        // ====================================================================
+//        // 3. Compute error in the shifted frame
+//        //
+//        // Shift both angles by FRAME_SHIFT (265°) so the wrap seam sits inside
+//        // the deadzone. This eliminates the 0/2PI jitter.
+//        //
+//        // Then, if the shortest-path error in this frame would still route
+//        // through the deadzone (SHIFTED_LOWER to SHIFTED_UPPER), force it the
+//        // other way. In the shifted frame the deadzone runs from SHIFTED_LOWER
+//        // (~335°) to SHIFTED_UPPER (~25°) crossing the 0 point — meaning any
+//        // error that is negative and would reach below SHIFTED_UPPER, or
+//        // positive and would reach above SHIFTED_LOWER, is going through the
+//        // zone and must be flipped.
+//        // ====================================================================
+//        double shiftedPos    = wrapToTwoPi(normalizedPos      - FRAME_SHIFT);
+//        double shiftedTarget = wrapToTwoPi(currentTargetAngle - FRAME_SHIFT);
+//
+//        double error = shiftedTarget - shiftedPos;
+//
+//        if (error >  Math.PI) error -= 2.0 * Math.PI;
+//        if (error < -Math.PI) error += 2.0 * Math.PI;
+//
+//        // In the shifted frame the safe region is [SHIFTED_UPPER, SHIFTED_LOWER]
+//        // i.e. roughly [25°, 335°]. The deadzone straddles 0° in this frame.
+//        // A path going positive from shiftedPos crosses the deadzone if it would
+//        // exceed SHIFTED_LOWER. A path going negative crosses if it would drop
+//        // below SHIFTED_UPPER. Force the long way in those cases.
+//        if (!inDeadzoneLatch) {
+//            boolean onLowerShiftedSide = shiftedPos >= SHIFTED_UPPER && shiftedPos <= Math.PI * 2;
+//            boolean onUpperShiftedSide = shiftedPos >= 0 && shiftedPos <= SHIFTED_LOWER;
+//
+//            if (onUpperShiftedSide && error > 0 && (shiftedPos + error) > SHIFTED_LOWER) {
+//                error -= 2.0 * Math.PI;
+//            } else if (onLowerShiftedSide && error < 0 && (shiftedPos + error) < SHIFTED_UPPER) {
+//                error += 2.0 * Math.PI;
+//            }
+//        }
+//
+//        // ====================================================================
+//        // 4. PD Output
+//        // ====================================================================
+//        double toleranceRad = Math.toRadians(toleranceDeg);
+//        double derivative   = error - lastError;
+//
+//        boolean atHoldPos = (Math.abs(normalizedPos - LOWER_HOLD) < toleranceRad)
+//                || (Math.abs(normalizedPos - UPPER_HOLD) < toleranceRad);
+//        if (atHoldPos) derivative = 0;
+//
+//        lastError = error;
+//
+//        double power        = p * error + d * derivative;
+//        double clampedPower = clamp(power, -maxPower, maxPower);
+//
+//        leftServo.setPower(clampedPower);
+//        rightServo.setPower(clampedPower);
+//
+//        controller.setP(p);
+//        controller.setD(d);
+//        controller.setTolerance(toleranceRad);
+//        controller.setSetPoint(currentTargetAngle);
+//        controller.calculate(normalizedPos);
+//    }
+    // =========================
+    // Update
+    // =========================
+
     public void update() {
 
         LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
@@ -408,9 +540,6 @@ public class Turret extends SubsystemBase {
 
         // ====================================================================
         // 1. Hysteresis deadzone detection
-        //
-        // Enter latch the moment we cross into (240°, 290°).
-        // Exit latch only once fully clear of LOWER_HOLD or UPPER_HOLD.
         // ====================================================================
         if (!inDeadzoneLatch) {
             if (normalizedPos > LOWER_DEADZONE && normalizedPos < UPPER_DEADZONE) {
@@ -430,20 +559,17 @@ public class Turret extends SubsystemBase {
         // ====================================================================
         // 2. Resolve Target Angle
         // ====================================================================
-
         if (inDeadzoneLatch) {
             currentTargetAngle = approachingFromLower ? LOWER_HOLD : UPPER_HOLD;
 
         } else if (enableAim || AUTOenableAim) {
             double dx, dy;
-
             Pose robotPose = Lebruxon.drivetrain.follower.getPose();
 
             if (Lebruxon.shooter.distance > 100) {
                 dx = Lebruxon.targetFar.getX() - robotPose.getX();
                 dy = Lebruxon.targetFar.getY() - robotPose.getY();
-            }
-            else {
+            } else {
                 dx = Lebruxon.targetClose.getX() - robotPose.getX();
                 dy = Lebruxon.targetClose.getY() - robotPose.getY();
             }
@@ -466,17 +592,6 @@ public class Turret extends SubsystemBase {
 
         // ====================================================================
         // 3. Compute error in the shifted frame
-        //
-        // Shift both angles by FRAME_SHIFT (265°) so the wrap seam sits inside
-        // the deadzone. This eliminates the 0/2PI jitter.
-        //
-        // Then, if the shortest-path error in this frame would still route
-        // through the deadzone (SHIFTED_LOWER to SHIFTED_UPPER), force it the
-        // other way. In the shifted frame the deadzone runs from SHIFTED_LOWER
-        // (~335°) to SHIFTED_UPPER (~25°) crossing the 0 point — meaning any
-        // error that is negative and would reach below SHIFTED_UPPER, or
-        // positive and would reach above SHIFTED_LOWER, is going through the
-        // zone and must be flipped.
         // ====================================================================
         double shiftedPos    = wrapToTwoPi(normalizedPos      - FRAME_SHIFT);
         double shiftedTarget = wrapToTwoPi(currentTargetAngle - FRAME_SHIFT);
@@ -486,19 +601,17 @@ public class Turret extends SubsystemBase {
         if (error >  Math.PI) error -= 2.0 * Math.PI;
         if (error < -Math.PI) error += 2.0 * Math.PI;
 
-        // In the shifted frame the safe region is [SHIFTED_UPPER, SHIFTED_LOWER]
-        // i.e. roughly [25°, 335°]. The deadzone straddles 0° in this frame.
-        // A path going positive from shiftedPos crosses the deadzone if it would
-        // exceed SHIFTED_LOWER. A path going negative crosses if it would drop
-        // below SHIFTED_UPPER. Force the long way in those cases.
+        // Force long-way routing adjustments to avoid deadzone crossing
         if (!inDeadzoneLatch) {
             boolean onLowerShiftedSide = shiftedPos >= SHIFTED_UPPER && shiftedPos <= Math.PI * 2;
             boolean onUpperShiftedSide = shiftedPos >= 0 && shiftedPos <= SHIFTED_LOWER;
 
             if (onUpperShiftedSide && error > 0 && (shiftedPos + error) > SHIFTED_LOWER) {
                 error -= 2.0 * Math.PI;
+                lastError -= 2.0 * Math.PI; // FIX: Keep derivative stable!
             } else if (onLowerShiftedSide && error < 0 && (shiftedPos + error) < SHIFTED_UPPER) {
                 error += 2.0 * Math.PI;
+                lastError += 2.0 * Math.PI; // FIX: Keep derivative stable!
             }
         }
 

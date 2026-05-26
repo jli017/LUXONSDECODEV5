@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.utils.Paths;
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 
     @Autonomous(preselectTeleOp="TeleOp")
-    public class BlueOPT18 extends CommandOpMode {
+    public class BlueOPT15 extends CommandOpMode {
 
         Paths paths;
 
@@ -21,18 +21,17 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
         public void initialize() {
             Lebruxon.init(hardwareMap, Lebruxon.MatchState.AUTO, Lebruxon.Alliance.BLUESQ);
             paths = new Paths(Lebruxon.drivetrain.follower, Lebruxon.Alliance.BLUESQ);
-            Lebruxon.drivetrain.follower.setMaxPower(0.8);
+            Lebruxon.drivetrain.follower.setMaxPower(1);
 
 
             Lebruxon.turret.enableAim = true;
+            Lebruxon.shooter.idle = true;
 
             schedule(new SequentialCommandGroup(
 
-                    Lebruxon.prime(),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosestartToScore),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                    new WaitCommand(75),
                     Lebruxon.shootWithIntake(),
                     Lebruxon.reset(),
 
@@ -47,11 +46,9 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 
 
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                    Lebruxon.prime(),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                    new WaitCommand(75),
                     Lebruxon.shootWithIntake(),
                     Lebruxon.reset(),
 
@@ -60,19 +57,17 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                         Lebruxon.intake.setPower(1, 1);
                     }),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
-                    new WaitCommand(75),
+                    new WaitCommand(50),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                    new WaitCommand(1000),
-                    new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
+                    new WaitCommand(800),
                   //  new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
 
 
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                    Lebruxon.prime(),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
+                    new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                    new WaitCommand(75),
                     Lebruxon.shootWithIntake(),
                     Lebruxon.reset(),
 
@@ -81,38 +76,15 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                         Lebruxon.intake.setPower(1, 1);
                     }),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
-                    new WaitCommand(75),
+                    new WaitCommand(50),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                    new WaitCommand(1000),
-                    new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
+                    new WaitCommand(800),
                    // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
-                    Lebruxon.prime(),
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
-                    Lebruxon.prime(),
-                    new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                    new WaitCommand(75),
-                    Lebruxon.shootWithIntake(),
-                    Lebruxon.reset(),
-
-                    new InstantCommand(() -> {
-                        Lebruxon.drivetrain.follower.setMaxPower(1);
-                        Lebruxon.intake.setPower(1, 1);
-                    }),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG3),
-                    new WaitCommand(75),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn3),
-                    new WaitCommand(1000),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
-                  //  new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
-
-
-                    new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                    Lebruxon.prime(),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG3),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                    new WaitCommand(75),
                     Lebruxon.shootWithIntake(),
                     Lebruxon.reset(),
 
@@ -121,14 +93,11 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                         Lebruxon.intake.setPower(1,1);
                     }),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakePPG),
-                    new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
-
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                    Lebruxon.prime(),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreGPP),
+                    new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                    new WaitCommand(75),
                     Lebruxon.shootWithIntake(),
                     Lebruxon.reset(),
 

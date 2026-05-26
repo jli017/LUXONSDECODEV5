@@ -39,6 +39,10 @@ public class TeleOp extends CommandOpMode {
         GamepadEx jonathan = new GamepadEx(gamepad2);
 
         // samai controls
+        samai.getGamepadButton(GamepadKeys.Button.TRIANGLE)
+                        .whenPressed(new InstantCommand(() -> {
+                            Lebruxon.shooter.idle = !Lebruxon.shooter.idle;
+                        }));
         samai.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(prime);
         samai.getGamepadButton(GamepadKeys.Button.CIRCLE)

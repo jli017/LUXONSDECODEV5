@@ -96,7 +96,7 @@ public class Paths {
     public PathChain turn2;
 
     public Pose CloseshootPose = new Pose(62,85, Math.toRadians(170));
-    public Pose CloseintakePPGPose = new Pose(20, 85, Math.toRadians(180));
+    public Pose CloseintakePPGPose = new Pose(18, 85, Math.toRadians(180));
     public Pose CloseintakePGPPose = new Pose(17, 55, Math.toRadians(180));
     public Pose CloseIntakePGPControl = new Pose(50, 53);
     public Pose CloseshootPGPPose = new Pose(53,85, Math.toRadians(190));
@@ -107,7 +107,7 @@ public class Paths {
     public Pose CloseIntakeG1Pose = new Pose(17,63,Math.toRadians(170));
     public Pose CloseIntakeG3Pose = new Pose(17,63,Math.toRadians(170));
 
-    public Pose CloseIntakeG1Pose2 = new Pose(11.5,58,Math.toRadians(146));
+    public Pose CloseIntakeG1Pose2 = new Pose(9,60,Math.toRadians(139));
     public Pose CloseIntakeG3Pose2 = new Pose(11.5,58,Math.toRadians(146));
 
     public Pose CloseShootG1Pose = new Pose(53,85,Math.toRadians(190));
@@ -483,7 +483,7 @@ public class Paths {
 
         ClosescoreGPP = follower
                 .pathBuilder()
-                .addPath(new BezierLine(CloseintakeGPP2Pose, CloseparkPose))
+                .addPath(new BezierLine(CloseintakePPGPose, CloseparkPose))
                 .setLinearHeadingInterpolation(CloseintakeGPP2Pose.getHeading(), CloseShootGPPPose.getHeading())
                 .setBrakingStrength(0.42)
                 .build();
