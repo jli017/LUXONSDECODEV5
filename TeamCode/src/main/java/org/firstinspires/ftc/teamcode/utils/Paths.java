@@ -81,6 +81,8 @@ public class Paths {
     public PathChain CloseintakeGPP1;
     public PathChain CloseintakeGPP2;
     public PathChain ClosescoreGPP;
+    public PathChain Closeintakelast;
+    public PathChain Closescorefinal;
 
     public PathChain ClosescoreG1;
     public PathChain ClosescoreG3;
@@ -398,6 +400,20 @@ public class Paths {
                 .setBrakingStrength(0.42)
                 .build();
 
+        Closeintakelast = follower
+                .pathBuilder()
+                .addPath(new BezierLine(CloseshootPGPPose, CloseintakePPGPose))
+                .setLinearHeadingInterpolation(CloseshootPGPPose.getHeading(), CloseintakePPGPose.getHeading())
+                .setBrakingStrength(0.42)
+                .build();
+
+        Closescorefinal = follower
+                .pathBuilder()
+                .addPath(new BezierLine(CloseintakePPGPose, CloseparkPose))
+                .setLinearHeadingInterpolation(CloseintakePPGPose.getHeading(), CloseparkPose.getHeading())
+                .setBrakingStrength(0.42)
+                .build();
+
 
         ClosescorePPG = follower
                 .pathBuilder()
@@ -430,7 +446,7 @@ public class Paths {
                 .build();
 
 
-        CloseIntakeG1 = follower
+        CloseIntakeG1 = follower //*
                 .pathBuilder()
                 .addPath(new BezierCurve(CloseshootPGPPose,CloseShootG1Control, CloseIntakeG1Pose))
                 .setLinearHeadingInterpolation(CloseshootPGPPose.getHeading(), CloseIntakeG1Pose.getHeading())

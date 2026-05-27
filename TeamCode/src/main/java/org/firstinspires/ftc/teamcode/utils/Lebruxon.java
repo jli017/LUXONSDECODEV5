@@ -152,6 +152,7 @@ public class Lebruxon {
             // calling it here ensures that after the last auto reset() the values
             // are fresh before teleop re-inits and reads them.
             turret.saveToStorage();
+            Storage.pose = Lebruxon.drivetrain.follower.getPose(); // ADD THIS
         });
     }
 
@@ -205,8 +206,6 @@ public class Lebruxon {
                                 new WaitCommand(150),
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(0.9)),
                                 new WaitCommand(130),
-                                new InstantCommand(() -> {}),
-                                new WaitCommand(200),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);

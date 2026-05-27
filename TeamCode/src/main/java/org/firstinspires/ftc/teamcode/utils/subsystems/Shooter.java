@@ -25,6 +25,7 @@ public class Shooter extends SubsystemBase {
     public ServoEx stopper;
 
     public boolean idle;
+    public int add;
 
     public static double P = 0.001;//0.006 0.000389
     public static double D = 0.0;
@@ -118,7 +119,7 @@ public class Shooter extends SubsystemBase {
                 double targetVelocity;
 
                 if (distance < 100) {
-                    targetVelocity = lutVelocity.get(distance);
+                    targetVelocity = (lutVelocity.get(distance) + add);
                 } else {
                     targetVelocity = 1500;
                 }
@@ -137,7 +138,7 @@ public class Shooter extends SubsystemBase {
             );
 
             double currentVelocity = getVelocity();
-            double targetVelocity = lutVelocity.get(distance);
+            double targetVelocity = (lutVelocity.get(distance) + add);
 
             controller.setSetPoint(targetVelocity); //PUT THIS BACK AFTER LUT
 
@@ -171,7 +172,7 @@ public class Shooter extends SubsystemBase {
             );
 
             double currentVelocity = getVelocity();
-            double targetVelocity = lutVelocity.get(distance);
+            double targetVelocity = (lutVelocity.get(distance) + add);
 
             controller.setSetPoint(targetVelocity); //PUT THIS BACK AFTER LUT
 

@@ -562,7 +562,7 @@ public class Turret extends SubsystemBase {
         if (inDeadzoneLatch) {
             currentTargetAngle = approachingFromLower ? LOWER_HOLD : UPPER_HOLD;
 
-        } else if (enableAim || AUTOenableAim) {
+        } else if (enableAim) {
             double dx, dy;
             Pose robotPose = Lebruxon.drivetrain.follower.getPose();
 
@@ -644,10 +644,12 @@ public class Turret extends SubsystemBase {
     // Public Accessors
     // =========================
 
+    public static double encoderTrim = 0;
+
     public double getNormalizedAngle() {
         int correctedTicks = encoderMotor.getCurrentPosition() - encoderOffset;
         double rawRad = correctedTicks / ticksPerRadian;
-        return wrapToTwoPi(rawRad);
+        return wrapToTwoPi(rawRad + encoderTrim);
     }
 
     public double getAngle() {

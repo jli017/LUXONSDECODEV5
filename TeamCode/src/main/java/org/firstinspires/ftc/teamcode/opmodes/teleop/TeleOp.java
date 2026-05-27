@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.utils.subsystems.Turret;
 @Configurable
 public class TeleOp extends CommandOpMode {
 
-    public static double increment = 0.0875;
+    public static double increment = 0.0175;
 
     @Override
     public void initialize() {
@@ -61,11 +61,11 @@ public class TeleOp extends CommandOpMode {
         samai.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(() -> {
                     if (Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE) {
-                        Pose b = new Pose(135.5, 7.8125, Math.toRadians(90));
+                        Pose b = new Pose(135.5, 9, Math.toRadians(90));
                         Lebruxon.drivetrain.follower.setPose(b);
                         Storage.pose = b;
                     } else {
-                        Pose r = new Pose(8.5, 7.8125, Math.toRadians(90));
+                        Pose r = new Pose(8.5, 9, Math.toRadians(90));
                         Lebruxon.drivetrain.follower.setPose(r);
                         Storage.pose = r;
                     }
@@ -79,22 +79,33 @@ public class TeleOp extends CommandOpMode {
         // FIX: homePos adjustments now use getNormalizedAngle() — always in [0, 2PI) —
         // instead of controller.getSetPoint(), which was unbounded and corrupted homePos
         // whenever pidSetpoint drifted outside the normalized range.
-        jonathan.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT).whenPressed(new InstantCommand(() -> {
-            Lebruxon.turret.homePos = Turret.wrapToTwoPi(Lebruxon.turret.getNormalizedAngle() - increment);
+        jonathan.getGamepadButton(GamepadKeys.Button.DPAD_LEFT).whenPressed(new InstantCommand(() -> {
+            Turret.encoderTrim = Turret.wrapToTwoPi(Turret.encoderTrim - increment);
         }));
 
-        jonathan.getGamepadButton(GamepadKeys.Button.DPAD_LEFT).whenPressed(new InstantCommand(() -> {
-            Lebruxon.turret.homePos = Turret.wrapToTwoPi(Lebruxon.turret.getNormalizedAngle() + increment);
+        jonathan.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT).whenPressed(new InstantCommand(() -> {
+            Turret.encoderTrim = Turret.wrapToTwoPi(Turret.encoderTrim + increment);
         }));
 
         // FIX: Preserve enableAim across re-init so a DPAD_UP re-init doesn't silently
         // reset turret state.
         jonathan.getGamepadButton(GamepadKeys.Button.DPAD_UP).whenPressed(new InstantCommand(() -> {
             boolean savedAim = Lebruxon.turret.enableAim;
-            double savedHome = Lebruxon.turret.homePos;
+            double savedHome = Turret.homePos;
             Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
             Lebruxon.turret.enableAim = savedAim;
-            Lebruxon.turret.homePos = savedHome;
+            Turret.homePos = savedHome;
+        }));
+
+        jonathan.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenPressed(new InstantCommand(() -> {
+            Lebruxon.shooter.add -= 100;
+        }));
+        jonathan.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER).whenPressed(new InstantCommand(() -> {
+            Lebruxon.shooter.add += 100;
+        }));
+
+        jonathan.getGamepadButton(GamepadKeys.Button.CROSS).whenPressed(new InstantCommand(() -> {
+            Lebruxon.shooter.add = 0;
         }));
 
         Lebruxon.shooter.resetHood();
@@ -122,29 +133,26 @@ public class TeleOp extends CommandOpMode {
             Lebruxon.intake.setPower(-0.8, -0.8);
         }
 
-        if (Lebruxon.intake.dist < 2){
+        if (Lebruxon.intake.dist < 3){
             gamepad1.rumble(300);
         }
 
-        telemetry.addData("turret angle (deg)",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
-        telemetry.addData("turret target (deg)",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));
-        telemetry.addData("turret enableAim",     Lebruxon.turret.enableAim);
-        telemetry.addData("turret homePos (deg)", Math.toDegrees(Lebruxon.turret.homePos));
-        telemetry.addData("shooter error",        Lebruxon.shooter.controller.getPositionError());
-        telemetry.addData("robot x",              Lebruxon.drivetrain.follower.getPose().getX());
-        telemetry.addData("robot y",              Lebruxon.drivetrain.follower.getPose().getY());
-        telemetry.addData("heading (deg)",        Math.toDegrees(Lebruxon.drivetrain.follower.getPose().getHeading()));
-        telemetry.addData("goal x",               Lebruxon.goalShooter.getX());
-        telemetry.addData("goal y",               Lebruxon.goalShooter.getY());
-        telemetry.addData("distance",             Lebruxon.shooter.distance);
-        telemetry.addData("shooter setpoint",     Lebruxon.shooter.controller.getSetPoint());
-        telemetry.addData("shooter atSetPoint",   Lebruxon.shooter.controller.atSetPoint());
-        telemetry.addData("shooter velo",         Lebruxon.shooter.getVelocity());
-        telemetry.addData("turret pos deg",    Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
-        telemetry.addData("turret target deg", Math.toDegrees(Lebruxon.turret.getTargetAngle()));
-        telemetry.addData("inDeadzone",        Lebruxon.turret.getNormalizedAngle() > Math.toRadians(240) && Lebruxon.turret.getNormalizedAngle() < Math.toRadians(290));
-        telemetry.addData("approachFromLower", Lebruxon.turret.approachingFromLower);
-        telemetry.update();
+        telemetry.addData("turret angle (deg) ",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
+        telemetry.addData("turret target (deg) ",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));
+        telemetry.addData("turret enableAim ",     Lebruxon.turret.enableAim);
+        telemetry.addData("turret homePos (deg) ", Math.toDegrees(Lebruxon.turret.homePos));
+        telemetry.addData("shooter error ",        Lebruxon.shooter.controller.getPositionError());
+        telemetry.addData("robot x ",              Lebruxon.drivetrain.follower.getPose().getX());
+        telemetry.addData("robot y ",              Lebruxon.drivetrain.follower.getPose().getY());
+        telemetry.addData("heading (deg) ",        Math.toDegrees(Lebruxon.drivetrain.follower.getPose().getHeading()));
+        telemetry.addData("distance ",             Lebruxon.shooter.distance);
+        telemetry.addData("shooter setpoint ",     Lebruxon.shooter.controller.getSetPoint());
+        telemetry.addData("shooter atSetPoint ",   Lebruxon.shooter.controller.atSetPoint());
+        telemetry.addData("shooter velo ",         Lebruxon.shooter.getVelocity());
+        telemetry.addData("turret pos deg ",    Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
+        telemetry.addData("turret target deg ", Math.toDegrees(Lebruxon.turret.getTargetAngle()));
+        telemetry.addData("inDeadzone ",        Lebruxon.turret.getNormalizedAngle() > Math.toRadians(240) && Lebruxon.turret.getNormalizedAngle() < Math.toRadians(290));
+        telemetry.addData("velo add ", Lebruxon.shooter.add);
         telemetry.update();
     }
 }

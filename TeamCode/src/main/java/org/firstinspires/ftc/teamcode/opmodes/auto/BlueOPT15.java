@@ -60,11 +60,9 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                     new WaitCommand(50),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
                     new WaitCommand(800),
-                  //  new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
-
 
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
+                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
@@ -81,7 +79,7 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                     new WaitCommand(800),
                    // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
+                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
@@ -92,9 +90,9 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                         Lebruxon.drivetrain.follower.setMaxPower(1);
                         Lebruxon.intake.setPower(1,1);
                     }),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakePPG),
+                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closeintakelast),
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreGPP),
+                    new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closescorefinal),
                     new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
