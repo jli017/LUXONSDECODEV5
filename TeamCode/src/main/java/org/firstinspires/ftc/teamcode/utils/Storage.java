@@ -10,7 +10,7 @@ public class    Storage {
     // turretAngle holds the normalized [0, 2PI) angle at the snapshot moment;
     // turretEncoderSnapshot holds the raw tick count at that same moment so
     // Turret can compute a tick offset and apply it to getCurrentPosition().
-    public static double turretAngle = 0;
+    public static double turretAngle = 0.0;
     public static int turretEncoderSnapshot = 0;
 
     public static Lebruxon.Alliance alliance = Lebruxon.Alliance.BLUE;

@@ -41,12 +41,12 @@ import org.firstinspires.ftc.teamcode.utils.Lebruxon;
                     }),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakePGP1),
                     new WaitCommand(50),
-                    new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn2),
 
 
                     new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                     new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
+                    new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                     Lebruxon.prime(),
                     new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                     Lebruxon.shootWithIntake(),

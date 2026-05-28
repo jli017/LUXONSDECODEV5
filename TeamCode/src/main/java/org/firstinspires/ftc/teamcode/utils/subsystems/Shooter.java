@@ -34,7 +34,7 @@ public class Shooter extends SubsystemBase {
     public static double TOLERANCE = 80;
 
     public static double STOPPER_OPEN = 0.35;
-    public static double STOPPER_CLOSED = 0.12;
+    public static double STOPPER_CLOSED = 0.14;
     public static double TRANSFER_UP = 0.85;
     public static double TRANSFER_DOWN = 0.5;
     public static double HOOD_MIN = 0;
@@ -158,7 +158,7 @@ public class Shooter extends SubsystemBase {
                 double currentVelocity = getVelocity();
                 double targetVelocity = 0;
 
-                controller.setSetPoint(targetVelocity); //PUT THIS BACK AFTER LUT
+                controller.setSetPoint(0); //PUT THIS BACK AFTER LUT
                 hood.set(lutHood.get(distance)); //PUT THIS BACK AFTER LUT
                 power = controller.calculate(currentVelocity);
                 setPower(power);

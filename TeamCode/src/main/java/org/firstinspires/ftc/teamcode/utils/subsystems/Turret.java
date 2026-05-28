@@ -360,26 +360,29 @@ public class Turret extends SubsystemBase {
     // =========================
 
     public Turret(HardwareMap hMap) {
-
         leftServo  = hMap.get(CRServo.class, "turretLeft");
         rightServo = hMap.get(CRServo.class, "turretRight");
         encoderMotor = hMap.get(DcMotorEx.class, "intake");
 
         encoderMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-
         leftServo.setDirection(CRServo.Direction.REVERSE);
         rightServo.setDirection(CRServo.Direction.REVERSE);
 
         controller.setTolerance(Math.toRadians(toleranceDeg));
         controller.reset();
 
-        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg); // ~235°
-        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg); // ~295°
+        // Compute HOLD boundaries FIRST before anything reads them
+        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
+        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
 
-        int rawNow = encoderMotor.getCurrentPosition();
+        // Reconstruct encoder offset using the exact snapshot pair from Storage
         int ticksForSavedAngle = (int) Math.round(Storage.turretAngle * ticksPerRadian);
-        encoderOffset = rawNow - ticksForSavedAngle;
+        encoderOffset = Storage.turretEncoderSnapshot - ticksForSavedAngle;
 
+        // 2. Set the default target angle to.[= wherever Auto left off, NOT homePos
+        currentTargetAngle = Storage.turretAngle;
+
+        // Now these reads are valid
         approachingFromLower = Storage.turretAngle <= LOWER_DEADZONE;
         inDeadzoneLatch = Storage.turretAngle > LOWER_DEADZONE
                 && Storage.turretAngle < UPPER_DEADZONE;
@@ -390,8 +393,9 @@ public class Turret extends SubsystemBase {
     // =========================
 
     public void saveToStorage() {
-        Storage.turretAngle           = getNormalizedAngle();
+        Storage.turretAngle = getNormalizedAngle();
         Storage.turretEncoderSnapshot = encoderMotor.getCurrentPosition();
+        encoderTrim = 0;
     }
 
     // =========================
@@ -623,7 +627,9 @@ public class Turret extends SubsystemBase {
 
         boolean atHoldPos = (Math.abs(normalizedPos - LOWER_HOLD) < toleranceRad)
                 || (Math.abs(normalizedPos - UPPER_HOLD) < toleranceRad);
-        if (atHoldPos) derivative = 0;
+        if (atHoldPos) {
+            derivative = 0;
+        }
 
         lastError = error;
 

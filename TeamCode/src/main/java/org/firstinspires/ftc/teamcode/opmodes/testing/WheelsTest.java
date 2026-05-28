@@ -24,10 +24,10 @@ public class WheelsTest extends OpMode {
      */
     @Override
     public void init() {
-        wheel1 = hardwareMap.get(DcMotor.class, "rF");
-        wheel2 = hardwareMap.get(DcMotor.class, "rB");
-        wheel3 = hardwareMap.get(DcMotor.class, "lF");
-        wheel4 = hardwareMap.get(DcMotor.class, "lB");
+        wheel1 = hardwareMap.get(DcMotor.class, "frontRightMotor");
+        wheel2 = hardwareMap.get(DcMotor.class, "backRightMotor");
+        wheel3 = hardwareMap.get(DcMotor.class, "frontLeftMotor");
+        wheel4 = hardwareMap.get(DcMotor.class, "backLeftMotor");
         wheel3.setDirection(DcMotor.Direction.REVERSE);
         wheel4.setDirection(DcMotor.Direction.REVERSE);
         intake = hardwareMap.get(DcMotor.class, "intake");

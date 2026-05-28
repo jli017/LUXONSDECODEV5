@@ -13,6 +13,7 @@ import static com.seattlesolvers.solverslib.util.MathUtils.clamp;
 
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 import org.firstinspires.ftc.teamcode.utils.Storage;
+import org.firstinspires.ftc.teamcode.utils.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.utils.subsystems.Turret;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
@@ -51,6 +52,7 @@ public class TeleOp extends CommandOpMode {
                             prime.cancel();
                             shoot.cancel();
                             shootWithIntake.cancel();
+                            Lebruxon.shooter.closeStopper();
                         }),
                         Lebruxon.reset()
                 ));
@@ -136,6 +138,8 @@ public class TeleOp extends CommandOpMode {
         if (Lebruxon.intake.dist < 3){
             gamepad1.rumble(300);
         }
+
+        Drivetrain.turbo = gamepad1.left_stick_button;
 
         telemetry.addData("turret angle (deg) ",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
         telemetry.addData("turret target (deg) ",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));

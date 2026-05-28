@@ -36,7 +36,7 @@ public class Lebruxon {
     }
 
     public static final Pose BLUE_START_POSE       = new Pose(56, 8.5, Math.toRadians(180));
-    public static final Pose BLUE_SQ_START_POSE    = new Pose(31.25, 133.4, Math.toRadians(90));
+    public static final Pose BLUE_SQ_START_POSE    = new Pose(33, 131, Math.toRadians(90));
     public static final Pose RED_SQ_START_POSE     = new Pose(144 - BLUE_SQ_START_POSE.getX(), BLUE_SQ_START_POSE.getY(), Math.toRadians(0));
     public static final Pose CLOSE_BLUE_START_POSE = new Pose(21, 123, Math.toRadians(144));
     public static final Pose RED_START_POSE        = new Pose(144 - BLUE_START_POSE.getX(), BLUE_START_POSE.getY(), Math.toRadians(0));
@@ -136,17 +136,14 @@ public class Lebruxon {
         turret.update();
         intake.update();
         shooter.update();
+        turret.saveToStorage();
+        Storage.pose = Lebruxon.drivetrain.follower.getPose(); // ADD THIS
     }
 
     public static InstantCommand reset() {
         return new InstantCommand(() -> {
             intake.setMinPower(0);
-            shooter.controller.reset();
-            //shooter.autoPower(false, false);
-            shooter.setVelocity(Shooter.idleVeloMultiplier);
-            shooter.closeStopper();
-            shooter.resetHood();
-
+            shooter.autoPower(false, false);
             // Snapshot the turret's current angle and raw encoder position into
             // Storage every time we reset. This is the authoritative save point —
             // calling it here ensures that after the last auto reset() the values
@@ -180,7 +177,7 @@ public class Lebruxon {
                                     intake.setMinPower(0);
                                 })
                         ),
-                        new InstantCommand(),
+                        new InstantCommand(() -> shooter.autoPower(false, false)),
                         usedTimeout::get
                 )
         );
@@ -194,8 +191,8 @@ public class Lebruxon {
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> {
                                     if(Lebruxon.shooter.distance>100) {
-                                        intake.setPower(0.85, 0.85);
-                                        intake.setMinPower(0.85);
+                                        intake.setPower(0.7, 0.7);
+                                        intake.setMinPower(0.7);
                                     } else {
                                         intake.setPower(0.95, 0.95);
                                         intake.setMinPower(0.95);
@@ -204,16 +201,19 @@ public class Lebruxon {
                                 new WaitCommand(80),
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
                                 new WaitCommand(150),
-                                new InstantCommand(() -> shooter.setCurrentHoodPercent(0.9)),
-                                new WaitCommand(130),
+                                new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
+                                new WaitCommand(400),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);
+                                    shooter.closeStopper();
                                 }),
                                 reset()
                         ),
-                        new InstantCommand(),
-                        () -> Lebruxon.shooter.controller.atSetPoint()
+                        new InstantCommand(() -> {
+                            shooter.autoPower(false, false);
+                            shooter.closeStopper();
+                        }),                        () -> Lebruxon.shooter.controller.atSetPoint()
                 )
         );
     }

@@ -14,7 +14,8 @@ import org.firstinspires.ftc.teamcode.utils.Storage;
 @Configurable
 public class Drivetrain extends SubsystemBase {
     public Follower follower;
-    public static double slow = .2;
+    public static double fast = 1;
+    public static boolean turbo = false;
     public PIDFController headingController;
 
     public Drivetrain(HardwareMap hardwareMap) {
@@ -25,22 +26,41 @@ public class Drivetrain extends SubsystemBase {
     }
 
     public void drive(Gamepad gamepad1) {
-        double multiplier = gamepad1.left_bumper? slow : 1;
         if(Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE || Storage.alliance == Lebruxon.Alliance.BLUESQ ) {
-            follower.setTeleOpDrive(
-                    gamepad1.left_stick_y*0.9,
-                    gamepad1.left_stick_x*0.9,
-                    -gamepad1.right_stick_x*0.8,
-                    false
-            );
+            if (turbo) {
+                follower.setTeleOpDrive(
+                        gamepad1.left_stick_y * 0.6,
+                        gamepad1.left_stick_x * 0.6,
+                        -gamepad1.right_stick_x * 0.8,
+                        false
+                );
+            }
+            else{
+                follower.setTeleOpDrive(
+                        gamepad1.left_stick_y * fast,
+                        gamepad1.left_stick_x * fast,
+                        -gamepad1.right_stick_x * 0.8,
+                        false
+                );
+            }
         }
         else {
-            follower.setTeleOpDrive(
-                    -gamepad1.left_stick_y*0.9,
-                    -gamepad1.left_stick_x*0.9,
-                    -gamepad1.right_stick_x*0.8,
-                    false
-            );
+            if (turbo) {
+                follower.setTeleOpDrive(
+                        -gamepad1.left_stick_y * 0.6,
+                        -gamepad1.left_stick_x * 0.6,
+                        -gamepad1.right_stick_x * 0.8,
+                        false
+                );
+            }
+            else{
+                follower.setTeleOpDrive(
+                        -gamepad1.left_stick_y * fast,
+                        -gamepad1.left_stick_x * fast,
+                        -gamepad1.right_stick_x * 0.8,
+                        false
+                );
+            }
         }
 
     }
