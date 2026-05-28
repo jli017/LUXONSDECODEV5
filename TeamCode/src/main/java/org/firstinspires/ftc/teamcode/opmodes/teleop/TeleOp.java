@@ -139,7 +139,7 @@ public class TeleOp extends CommandOpMode {
             gamepad1.rumble(300);
         }
 
-        Drivetrain.turbo = gamepad1.left_stick_button;
+        Drivetrain.turbo = gamepad1.square;
 
         telemetry.addData("turret angle (deg) ",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
         telemetry.addData("turret target (deg) ",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));

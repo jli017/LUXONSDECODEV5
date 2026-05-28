@@ -27,7 +27,7 @@ public class Drivetrain extends SubsystemBase {
 
     public void drive(Gamepad gamepad1) {
         if(Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE || Storage.alliance == Lebruxon.Alliance.BLUESQ ) {
-            if (turbo) {
+            if (!turbo) {
                 follower.setTeleOpDrive(
                         gamepad1.left_stick_y * 0.6,
                         gamepad1.left_stick_x * 0.6,
@@ -45,7 +45,7 @@ public class Drivetrain extends SubsystemBase {
             }
         }
         else {
-            if (turbo) {
+            if (!turbo) {
                 follower.setTeleOpDrive(
                         -gamepad1.left_stick_y * 0.6,
                         -gamepad1.left_stick_x * 0.6,
