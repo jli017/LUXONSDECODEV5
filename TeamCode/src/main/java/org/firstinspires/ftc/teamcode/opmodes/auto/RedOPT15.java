@@ -32,6 +32,7 @@ public class RedOPT15 extends CommandOpMode {
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosestartToScore),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
@@ -49,6 +50,7 @@ public class RedOPT15 extends CommandOpMode {
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
@@ -66,6 +68,7 @@ public class RedOPT15 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
@@ -83,6 +86,7 @@ public class RedOPT15 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
@@ -96,6 +100,7 @@ public class RedOPT15 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 

@@ -33,6 +33,9 @@ public class Paths {
     public Pose intakePPG1Pose = new Pose(46, 35, intakeGPP1Pose.getHeading());
     public Pose intakePPG2Pose = new Pose(18, 35, intakeGPP1Pose.getHeading());
     public Pose intakePPG1Control = new Pose(65, 73);
+
+    public Pose swipe1 = new Pose(46, 35, intakeGPP1Pose.getHeading());
+    public Pose swipe2 = new Pose(8, 35, intakeGPP1Pose.getHeading());
     public Pose parkPose = new Pose(42, 19, intakeGPP1Pose.getHeading());
 
     public PathChain startToScore1;
@@ -52,13 +55,19 @@ public class Paths {
     public PathChain intakepgp3;
     public PathChain shootpgp;
     public PathChain park2;
+    public PathChain swipefar;
 
-    public Pose shootPose = new Pose(54, 15, Math.toRadians(145));
+    public PathChain swipefirst;
+    public PathChain swipelast;
+
+    public Pose shootPose = new Pose(60, 16, Math.toRadians(145));
+    //public Pose shootingPose = new Pose(60, 19, Math.toRadians(180));
+
     public Pose intakegpp1Pose = new Pose(43, 34, Math.toRadians(180));
     public Pose intakegpp2Pose = new Pose(17, 34, intakegpp1Pose.getHeading());
     public Pose shootgppPose = new Pose(66, 77, Math.toRadians(115));
-    public Pose intakepgp1Pose = new Pose(12, 10, intakeGPP1Pose.getHeading());
-    public Pose checkBackintakepgp1Pose = new Pose(15, 10, intakeGPP1Pose.getHeading());
+    public Pose intakepgp1Pose = new Pose(12, 8, intakeGPP1Pose.getHeading());
+    public Pose checkBackintakepgp1Pose = new Pose(17, 8, intakeGPP1Pose.getHeading());
     public Pose gateToPick = new Pose(12, 10, intakeGPP1Pose.getHeading());
     public Pose gateCheck = new Pose(15, 16, intakeGPP1Pose.getHeading());
     public Pose shootpgpPose = new Pose(63, 17, Math.toRadians(115));
@@ -96,18 +105,18 @@ public class Paths {
     public Pose CloseintakeGPP1Pose   = new Pose(45, 36, Math.toRadians(180));
     public Pose CloseintakeGPP2Pose   = new Pose(14, 36, Math.toRadians(180));
     public Pose CloseShootGPPPose     = new Pose(53, 100, Math.toRadians(190));
-    public Pose CloseIntakeG1Pose     = new Pose(17, 63, Math.toRadians(170));
+    public Pose CloseIntakeG1Pose     = new Pose(16, 59, Math.toRadians(170));
     public Pose CloseIntakeG3Pose     = new Pose(17, 63, Math.toRadians(170));
-    public Pose CloseIntakeG1Pose2    = new Pose(11, 56.5, Math.toRadians(139));
+    public Pose CloseIntakeG1Pose2    = new Pose(11, 58.5, Math.toRadians(138.5));
     public Pose CloseIntakeG3Pose2    = new Pose(11.5, 58, Math.toRadians(146));
     public Pose CloseShootG1Pose      = new Pose(53, 85, Math.toRadians(190));
     public Pose CloseShootG1Control   = new Pose(49, 63);
-    public Pose CloseparkPose         = new Pose(60, 103, Math.toRadians(180));
+    public Pose CloseparkPose         = new Pose(57.5, 107, Math.toRadians(180));
 
     public Paths(Follower follower, Lebruxon.Alliance alliance) {
         startPose = Lebruxon.startPose;
 
-        if (alliance == Lebruxon.Alliance.RED || alliance == Lebruxon.Alliance.REDCLOSE) {
+        if (alliance == Lebruxon.Alliance.RED || alliance == Lebruxon.Alliance.REDCLOSE || alliance == Lebruxon.Alliance.REDSQ) {
             // --- Far zone poses ---
             shootingPose        = shootingPose.mirror();
             intakeGPP1Pose      = intakeGPP1Pose.mirror();
@@ -121,6 +130,8 @@ public class Paths {
             intakePPG2Pose      = intakePPG2Pose.mirror();
             intakePPG1Control   = intakePPG1Control.mirror();
             parkPose            = parkPose.mirror();
+            swipe1              = swipe1.mirror();
+            swipe2              = swipe2.mirror();
 
             // --- Baryon auto poses ---
             shootPose                  = shootPose.mirror();
@@ -197,7 +208,7 @@ public class Paths {
                 .build();
 
         intakePPG1 = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, intakePPG1Pose))
+                .addPath(new BezierLine(startPose, intakePPG1Pose))
                 .setLinearHeadingInterpolation(shootingPose.getHeading(), intakePPG1Pose.getHeading())
                 .setBrakingStrength(0.42)
                 .build();
@@ -215,8 +226,8 @@ public class Paths {
                 .build();
 
         park = follower.pathBuilder()
-                .addPath(new BezierLine(shootingPose, parkPose))
-                .setLinearHeadingInterpolation(shootingPose.getHeading(), parkPose.getHeading())
+                .addPath(new BezierLine(shootPose, parkPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), parkPose.getHeading())
                 .setBrakingStrength(0.42)
                 .build();
 
@@ -265,7 +276,7 @@ public class Paths {
                 .build();
 
         shootpgp = follower.pathBuilder()
-                .addPath(new BezierLine(intakepgp1Pose, shootpgpPose))
+                .addPath(new BezierLine(intakepgp1Pose, shootPose))
                 .setBrakingStrength(0.42)
                 .setLinearHeadingInterpolation(intakepgp1Pose.getHeading(), shootPose.getHeading())
                 .build();
@@ -297,6 +308,24 @@ public class Paths {
         park2 = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose, parkPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), parkPose.getHeading())
+                .setBrakingStrength(0.42)
+                .build();
+
+        swipefirst = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, swipe1))
+                .setLinearHeadingInterpolation(swipe1.getHeading(), swipe2.getHeading())
+                .setBrakingStrength(0.42)
+                .build();
+
+        swipefar = follower.pathBuilder()
+                .addPath(new BezierLine(swipe1, swipe2))
+                .setLinearHeadingInterpolation(swipe1.getHeading(), swipe2.getHeading())
+                .setBrakingStrength(0.42)
+                .build();
+
+        swipelast = follower.pathBuilder()
+                .addPath(new BezierLine(swipe2, shootPose))
+                .setLinearHeadingInterpolation(swipe1.getHeading(), swipe2.getHeading())
                 .setBrakingStrength(0.42)
                 .build();
 

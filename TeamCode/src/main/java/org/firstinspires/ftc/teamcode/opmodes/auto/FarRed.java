@@ -22,8 +22,10 @@ public class FarRed extends CommandOpMode {
         paths = new Paths(Lebruxon.drivetrain.follower, Lebruxon.Alliance.RED);
         Lebruxon.drivetrain.follower.setMaxPower(1);
 
+        Lebruxon.turret.enableAim = true;
+        Lebruxon.shooter.idle = true;
+
         schedule(new SequentialCommandGroup(
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.startToScore1),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 Lebruxon.shootWithIntake(),
@@ -63,40 +65,29 @@ public class FarRed extends CommandOpMode {
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 Lebruxon.shootWithIntake(),
+                new InstantCommand(() -> {
+                    Lebruxon.drivetrain.follower.setMaxPower(1);
+                    Lebruxon.intake.setPower(1, 1);
+                }),
                 Lebruxon.reset(),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.intakepgp1),
-                new WaitCommand(200),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.checkIntakepgp1),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.intakepgp1again),
+
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.swipefirst),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.swipefar),
                 new WaitCommand(200),
                 new InstantCommand(() -> {
-                    Lebruxon.intake.setPower(0,0);
+                    Lebruxon.intake.setPower(0, 0);
                     Lebruxon.drivetrain.follower.setMaxPower(1);
                 }),
-
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.shootpgp),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.swipelast),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 Lebruxon.shootWithIntake(),
+                new InstantCommand(() -> {
+                    Lebruxon.drivetrain.follower.setMaxPower(1);
+                    Lebruxon.intake.setPower(1, 1);
+                }),
                 Lebruxon.reset(),
-/**
- new InstantCommand(() -> Mosby.intake.setPower(1)),
- new FollowPathCommand(Mosby.drivetrain.follower, paths.intakepgp1),
- new WaitCommand(200),
- new FollowPathCommand(Mosby.drivetrain.follower, paths.checkIntakepgp1),
- new FollowPathCommand(Mosby.drivetrain.follower, paths.intakepgp1again),
- new WaitCommand(200),
- new InstantCommand(() -> {
- Mosby.intake.setPower(0);
- Mosby.drivetrain.follower.setMaxPower(1);
- }),
 
- new FollowPathCommand(Mosby.drivetrain.follower, paths.shootpgp),
- Mosby.prime(),
- new WaitUntilCommand(() -> Mosby.shooter.controller.atSetPoint()),
- Mosby.shootWithIntake(),
- Mosby.reset(),
- **/
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.park)
         ));
 

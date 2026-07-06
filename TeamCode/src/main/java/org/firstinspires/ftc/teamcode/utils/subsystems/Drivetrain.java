@@ -29,38 +29,20 @@ public class Drivetrain extends SubsystemBase {
         if(Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE || Storage.alliance == Lebruxon.Alliance.BLUESQ ) {
             if (!turbo) {
                 follower.setTeleOpDrive(
-                        gamepad1.left_stick_y * 0.6,
-                        gamepad1.left_stick_x * 0.6,
-                        -gamepad1.right_stick_x * 0.8,
-                        false
-                );
-            }
-            else{
-                follower.setTeleOpDrive(
-                        gamepad1.left_stick_y * fast,
-                        gamepad1.left_stick_x * fast,
+                        gamepad1.left_stick_y * 0.8,
+                        gamepad1.left_stick_x * 0.8,
                         -gamepad1.right_stick_x * 0.8,
                         false
                 );
             }
         }
         else {
-            if (!turbo) {
                 follower.setTeleOpDrive(
-                        -gamepad1.left_stick_y * 0.6,
-                        -gamepad1.left_stick_x * 0.6,
+                        -gamepad1.left_stick_y * 0.8,
+                        -gamepad1.left_stick_x * 0.8,
                         -gamepad1.right_stick_x * 0.8,
                         false
                 );
-            }
-            else{
-                follower.setTeleOpDrive(
-                        -gamepad1.left_stick_y * fast,
-                        -gamepad1.left_stick_x * fast,
-                        -gamepad1.right_stick_x * 0.8,
-                        false
-                );
-            }
         }
 
     }

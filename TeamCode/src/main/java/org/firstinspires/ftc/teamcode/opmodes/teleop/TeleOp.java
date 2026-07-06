@@ -60,16 +60,30 @@ public class TeleOp extends CommandOpMode {
         samai.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(shootWithIntake);
 
-        samai.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+        jonathan.getGamepadButton(GamepadKeys.Button.SHARE)
                 .whenPressed(new InstantCommand(() -> {
-                    if (Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE) {
-                        Pose b = new Pose(135.5, 9, Math.toRadians(90));
-                        Lebruxon.drivetrain.follower.setPose(b);
-                        Storage.pose = b;
+                    if (Storage.alliance == Lebruxon.Alliance.BLUE || Storage.alliance == Lebruxon.Alliance.BLUECLOSE || Storage.alliance == Lebruxon.Alliance.BLUESQ) {
+                        if (Lebruxon.shooter.distance > 100) {
+                            Pose b = new Pose(135.5, 9, Math.toRadians(90));
+                            Lebruxon.drivetrain.follower.setPose(b);
+                            Storage.pose = b;
+                        }
+                        else {
+                            Pose b = new Pose(33, 131, Math.toRadians(90));
+                            Lebruxon.drivetrain.follower.setPose(b);
+                            Storage.pose = b;
+                        }
                     } else {
-                        Pose r = new Pose(8.5, 9, Math.toRadians(90));
-                        Lebruxon.drivetrain.follower.setPose(r);
-                        Storage.pose = r;
+                        if (Lebruxon.shooter.distance > 100) {
+                            Pose r = new Pose(8.5, 9, Math.toRadians(90));
+                            Lebruxon.drivetrain.follower.setPose(r);
+                            Storage.pose = r;
+                        }
+                        else {
+                            Pose b = new Pose(111, 131, Math.toRadians(90));
+                            Lebruxon.drivetrain.follower.setPose(b);
+                            Storage.pose = b;
+                        }
                     }
                 }));
 
@@ -144,7 +158,7 @@ public class TeleOp extends CommandOpMode {
         telemetry.addData("turret angle (deg) ",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
         telemetry.addData("turret target (deg) ",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));
         telemetry.addData("turret enableAim ",     Lebruxon.turret.enableAim);
-        telemetry.addData("turret homePos (deg) ", Math.toDegrees(Lebruxon.turret.homePos));
+        telemetry.addData("turret homePos (deg) ", Math.toDegrees(Turret.homePos));
         telemetry.addData("shooter error ",        Lebruxon.shooter.controller.getPositionError());
         telemetry.addData("robot x ",              Lebruxon.drivetrain.follower.getPose().getX());
         telemetry.addData("robot y ",              Lebruxon.drivetrain.follower.getPose().getY());

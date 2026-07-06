@@ -37,7 +37,7 @@ public class Lebruxon {
 
     public static final Pose BLUE_START_POSE       = new Pose(56, 8.5, Math.toRadians(180));
     public static final Pose BLUE_SQ_START_POSE    = new Pose(33, 131, Math.toRadians(90));
-    public static final Pose RED_SQ_START_POSE     = new Pose(144 - BLUE_SQ_START_POSE.getX(), BLUE_SQ_START_POSE.getY(), Math.toRadians(0));
+    public static final Pose RED_SQ_START_POSE     = new Pose(144 - BLUE_SQ_START_POSE.getX(), BLUE_SQ_START_POSE.getY(), Math.toRadians(90));
     public static final Pose CLOSE_BLUE_START_POSE = new Pose(21, 123, Math.toRadians(144));
     public static final Pose RED_START_POSE        = new Pose(144 - BLUE_START_POSE.getX(), BLUE_START_POSE.getY(), Math.toRadians(0));
     public static final Pose CLOSE_RED_START_POSE  = new Pose(144 - CLOSE_BLUE_START_POSE.getX(), CLOSE_BLUE_START_POSE.getY(), Math.toRadians(36));
@@ -202,7 +202,7 @@ public class Lebruxon {
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
                                 new WaitCommand(150),
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
-                                new WaitCommand(400),
+                                new WaitCommand(450),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);

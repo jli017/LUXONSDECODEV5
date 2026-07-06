@@ -393,7 +393,11 @@ public class Turret extends SubsystemBase {
     // =========================
 
     public void saveToStorage() {
-        Storage.turretAngle = getNormalizedAngle();
+        // Save raw angle WITHOUT trim so the snapshot pair is self-consistent
+        int correctedTicks = encoderMotor.getCurrentPosition() - encoderOffset;
+        double rawAngleNoTrim = wrapToTwoPi(correctedTicks / ticksPerRadian);
+
+        Storage.turretAngle = rawAngleNoTrim;
         Storage.turretEncoderSnapshot = encoderMotor.getCurrentPosition();
         encoderTrim = 0;
     }
