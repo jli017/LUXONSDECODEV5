@@ -97,8 +97,6 @@ public class FarRed extends CommandOpMode {
     public void run() {
         super.run();
         Lebruxon.update();
-        telemetry.addData("turret angle", Math.toDegrees(Lebruxon.turret.getAngle()));
-        telemetry.addData("setpoint", Lebruxon.turret.controller.getSetPoint());
         telemetry.addData("goal", Lebruxon.goal);
         telemetry.addData("shooter current velocity", Lebruxon.shooter.getVelocity());
         telemetry.addData("shooter set Velocity", Lebruxon.shooter.power);

@@ -92,17 +92,6 @@ public class TeleOp extends CommandOpMode {
                     Lebruxon.turret.enableAim = !Lebruxon.turret.enableAim;
                 }));
 
-        // FIX: homePos adjustments now use getNormalizedAngle() — always in [0, 2PI) —
-        // instead of controller.getSetPoint(), which was unbounded and corrupted homePos
-        // whenever pidSetpoint drifted outside the normalized range.
-        jonathan.getGamepadButton(GamepadKeys.Button.DPAD_LEFT).whenPressed(new InstantCommand(() -> {
-            Turret.encoderTrim = Turret.wrapToTwoPi(Turret.encoderTrim - increment);
-        }));
-
-        jonathan.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT).whenPressed(new InstantCommand(() -> {
-            Turret.encoderTrim = Turret.wrapToTwoPi(Turret.encoderTrim + increment);
-        }));
-
         // FIX: Preserve enableAim across re-init so a DPAD_UP re-init doesn't silently
         // reset turret state.
         jonathan.getGamepadButton(GamepadKeys.Button.DPAD_UP).whenPressed(new InstantCommand(() -> {
@@ -155,7 +144,6 @@ public class TeleOp extends CommandOpMode {
 
         Drivetrain.turbo = gamepad1.square;
 
-        telemetry.addData("turret angle (deg) ",   Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
         telemetry.addData("turret target (deg) ",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));
         telemetry.addData("turret enableAim ",     Lebruxon.turret.enableAim);
         telemetry.addData("turret homePos (deg) ", Math.toDegrees(Turret.homePos));
@@ -167,9 +155,7 @@ public class TeleOp extends CommandOpMode {
         telemetry.addData("shooter setpoint ",     Lebruxon.shooter.controller.getSetPoint());
         telemetry.addData("shooter atSetPoint ",   Lebruxon.shooter.controller.atSetPoint());
         telemetry.addData("shooter velo ",         Lebruxon.shooter.getVelocity());
-        telemetry.addData("turret pos deg ",    Math.toDegrees(Lebruxon.turret.getNormalizedAngle()));
         telemetry.addData("turret target deg ", Math.toDegrees(Lebruxon.turret.getTargetAngle()));
-        telemetry.addData("inDeadzone ",        Lebruxon.turret.getNormalizedAngle() > Math.toRadians(240) && Lebruxon.turret.getNormalizedAngle() < Math.toRadians(290));
         telemetry.addData("velo add ", Lebruxon.shooter.add);
         telemetry.update();
     }

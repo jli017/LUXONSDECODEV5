@@ -136,7 +136,6 @@ public class Lebruxon {
         turret.update();
         intake.update();
         shooter.update();
-        turret.saveToStorage();
         Storage.pose = Lebruxon.drivetrain.follower.getPose(); // ADD THIS
     }
 
@@ -148,7 +147,6 @@ public class Lebruxon {
             // Storage every time we reset. This is the authoritative save point —
             // calling it here ensures that after the last auto reset() the values
             // are fresh before teleop re-inits and reads them.
-            turret.saveToStorage();
             Storage.pose = Lebruxon.drivetrain.follower.getPose(); // ADD THIS
         });
     }
