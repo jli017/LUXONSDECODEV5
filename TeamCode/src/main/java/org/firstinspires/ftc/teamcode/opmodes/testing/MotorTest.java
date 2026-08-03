@@ -4,48 +4,42 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 @Configurable
 @TeleOp
 public class MotorTest extends OpMode {
-    DcMotor motor1;
-    DcMotor motor2;
-    Servo hood;
-    public static double pos = 0.2;
 
-     //I like this code
+    private DcMotorEx motor1;
 
-    /**
-     * User-defined init method
-     * <p>
-     * This method will be called once, when the INIT button is pressed.
-     */
+    // GoBILDA 28 ticks/rev encoder
+    private static final double TICKS_PER_REV = 28.0;
+
     @Override
     public void init() {
-        motor1 = hardwareMap.get(DcMotor.class, "shooterMotor");
-        motor2 = hardwareMap.get(DcMotor.class, "shooterMotor2");
-        hood = hardwareMap.get(Servo.class, "stopper");
+        motor1 = hardwareMap.get(DcMotorEx.class, "motor");
 
-        motor1.setDirection(DcMotorSimple.Direction.REVERSE);
+        motor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    /**
-     * User-defined loop method
-     * <p>
-     * This method will be called repeatedly during the period between when
-     * the play button is pressed and when the OpMode is stopped.
-     */
     @Override
     public void loop() {
+        // Right trigger = forward, Left trigger = reverse
         double power = gamepad1.right_trigger - gamepad1.left_trigger;
 
-        hood.setPosition(pos);
         motor1.setPower(power);
-        motor2.setPower(power);
-        telemetry.addData("Power", power);
-        telemetry.update();
 
+        // Velocity in encoder ticks per second
+        double ticksPerSecond = motor1.getVelocity();
+
+        // Convert to RPM
+        double rpm = (ticksPerSecond / TICKS_PER_REV) * 60.0;
+
+        telemetry.addData("Power", "%.2f", power);
+        telemetry.addData("Velocity (ticks/sec)", "%.2f", ticksPerSecond);
+        telemetry.addData("RPM", "%.2f", rpm);
+        telemetry.addData("Encoder Position", motor1.getCurrentPosition());
+        telemetry.update();
     }
 }

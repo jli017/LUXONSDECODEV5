@@ -394,16 +394,9 @@ public class Paths {
                 .setLinearHeadingInterpolation(CloseIntakeG3Pose.getHeading(), CloseIntakeG3Pose2.getHeading())
                 .build();
 
-//        ClosescoreG1 = follower.pathBuilder()
-//                .addPath(new BezierCurve(CloseIntakeG1Pose2, CloseShootG1Control, CloseshootPGPPose))
-//                .setLinearHeadingInterpolation(CloseIntakeG1Pose2.getHeading(), CloseshootPGPPose.getHeading())
-//                .setBrakingStrength(0.42)
-//                .build();
-
         ClosescoreG1 = follower.pathBuilder()
                 .addPath(new BezierCurve(CloseIntakeG1Pose2, CloseShootG1Control, CloseshootPGPPose))
-                .setTangentHeadingInterpolation()
-                .setReversed()
+                .setLinearHeadingInterpolation(CloseIntakeG1Pose2.getHeading(), CloseshootPGPPose.getHeading())
                 .setBrakingStrength(0.42)
                 .build();
 

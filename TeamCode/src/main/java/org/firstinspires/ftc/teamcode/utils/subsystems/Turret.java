@@ -1,13 +1,281 @@
+//package org.firstinspires.ftc.teamcode.utils.subsystems;
+//
+//import com.bylazar.configurables.annotations.Configurable;
+//import com.pedropathing.geometry.Pose;
+//import com.qualcomm.robotcore.hardware.CRServo;
+//import com.qualcomm.robotcore.hardware.DcMotorEx;
+//import com.qualcomm.robotcore.hardware.HardwareMap;
+//import com.seattlesolvers.solverslib.command.SubsystemBase;
+//import com.seattlesolvers.solverslib.controller.PIDFController;
+//
+//import org.firstinspires.ftc.teamcode.utils.Lebruxon;
+//import org.firstinspires.ftc.teamcode.utils.Storage;
+//
+//@Configurable
+//public class Turret extends SubsystemBase {
+//
+//    // =========================
+//    // Hardware
+//    // =========================
+//
+//    public CRServo leftServo;
+//    public CRServo rightServo;
+//    public DcMotorEx encoderMotor;
+//
+//    // =========================
+//    // Encoder / Gearing
+//    // =========================
+//
+//    public static double encoderTicksPerRev = 8192.0;
+//    public static double gearRatio = 208.0 / 71.0;
+//    public static double ticksPerTurretRev = encoderTicksPerRev * gearRatio;
+//    public static double ticksPerRadian = ticksPerTurretRev / (2.0 * Math.PI);
+//
+//    // =========================
+//    // PID Tuning
+//    // =========================
+//
+//    public static double p = 0.8;
+//    public static double d = 0.002;
+//
+//    public static double maxPower = 0.85;
+//    public static double toleranceDeg = 0;
+//
+//    public PIDFController controller = new PIDFController(p, 0, d, 0);
+//
+//    // ===================================
+//    // Hard Limits (Mapped 0 to 2PI Space)
+//    // ===================================
+//
+//    // Safe Travel Region: Side A [0°, 240°] and Side B [290°, 360°]
+//    // Prohibited Deadzone Region: (240°, 290°)
+//    private static final double LOWER_DEADZONE = Math.toRadians(240.0);
+//    private static final double UPPER_DEADZONE = Math.toRadians(290.0);
+//
+//    public static double deadzoneMarginDeg = 0.5;
+//    private static double LOWER_HOLD;
+//    private static double UPPER_HOLD;
+//
+//    // =========================
+//    // Runtime State
+//    // =========================
+//
+//    public static double homePos = 0.0;
+//    public boolean enableAim = true;
+//    public boolean AUTOenableAim = true;
+//
+//    private double currentTargetAngle = homePos;
+//    private double lastError = 0.0;
+//    private double lastSafeAngle = homePos;
+//    private boolean wasInDeadzone = false;
+//
+//    // =========================
+//    // Encoder Offset
+//    // =========================
+//
+//    // Applied to getCurrentPosition() so the turret's logical zero is consistent
+//    // across re-inits. Set in the constructor from Storage so auto→teleop works.
+//    //
+//    // Formula: rawTicks - encoderOffset = ticks relative to logical zero.
+//    // When saving: encoderOffset = rawTicks - (savedAngleRad * ticksPerRadian).
+//    private int encoderOffset = 0;
+//
+//    // =========================
+//    // Constructor
+//    // =========================
+//
+//    public Turret(HardwareMap hMap) {
+//
+//        leftServo  = hMap.get(CRServo.class, "turretLeft");
+//        rightServo = hMap.get(CRServo.class, "turretRight");
+//        encoderMotor = hMap.get(DcMotorEx.class, "intake");
+//
+//        encoderMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+//
+//        leftServo.setDirection(CRServo.Direction.REVERSE);
+//        rightServo.setDirection(CRServo.Direction.REVERSE);
+//
+//        controller.setTolerance(Math.toRadians(toleranceDeg));
+//        controller.reset();
+//
+//        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg); // 235°
+//        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg); // 295°
+//
+//        // Restore absolute position from Storage.
+//        //
+//        // Storage.turretEncoderSnapshot = raw ticks when Storage.turretAngle was saved.
+//        // Storage.turretAngle           = normalized angle (rad) at that moment.
+//        //
+//        // We want: (rawNow - offset) / ticksPerRadian == savedAngle  (mod 2PI)
+//        // So:       offset = rawNow - savedAngle * ticksPerRadian
+//        //
+//        // This holds as long as the encoder hasn't been physically moved since the
+//        // snapshot (which is true across the auto→teleop transition on an FTC robot
+//        // because the hub stays powered during the init phase).
+//        int rawNow = encoderMotor.getCurrentPosition();
+//        int ticksForSavedAngle = (int) Math.round(Storage.turretAngle * ticksPerRadian);
+//        encoderOffset = rawNow - ticksForSavedAngle;
+//
+//        // Seed lastSafeAngle from Storage so the deadzone recovery side is correct
+//        // on the very first tick after re-init.
+//        lastSafeAngle = Storage.turretAngle;
+//    }
+//
+//    // =========================
+//    // Snapshot (call at end of auto before OpMode stops)
+//    // =========================
+//
+//    /**
+//     * Saves the current absolute turret angle and raw encoder position into Storage
+//     * so the next OpMode (teleop) can reconstruct the offset and continue tracking
+//     * from the correct position.
+//     *
+//     * Call this from Lebruxon.reset() or at the very end of the auto sequence.
+//     */
+//    public void saveToStorage() {
+//        Storage.turretAngle          = getNormalizedAngle();
+//        Storage.turretEncoderSnapshot = encoderMotor.getCurrentPosition();
+//    }
+//
+//    // =========================
+//    // Update
+//    // =========================
+//
+//    public void update() {
+//
+//        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
+//        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
+//
+//        double normalizedPos = getNormalizedAngle();
+//
+//        // Continuously persist so the value is fresh if the OpMode stops unexpectedly.
+//        Storage.turretAngle = normalizedPos;
+//
+//        if (normalizedPos <= LOWER_DEADZONE || normalizedPos >= UPPER_DEADZONE) {
+//            lastSafeAngle = normalizedPos;
+//        }
+//
+//        // ====================================================================
+//        // 2. Resolve Target Angle
+//        // ====================================================================
+//        boolean inDeadzone = normalizedPos > LOWER_DEADZONE && normalizedPos < UPPER_DEADZONE;
+//
+//        if (inDeadzone) {
+//            currentTargetAngle = (lastSafeAngle <= LOWER_DEADZONE) ? LOWER_HOLD : UPPER_HOLD;
+//
+//            // Only reset lastError on the FIRST tick entering the deadzone.
+//            // Resetting every tick caused a D-term spike on every exit.
+//            if (!wasInDeadzone) {
+//                lastError = 0.0;
+//            }
+//
+//        } else if (enableAim || AUTOenableAim) {
+//            Pose robotPose = Lebruxon.drivetrain.follower.getPose();
+//            double dx = Lebruxon.goal.getX() - robotPose.getX();
+//            double dy = Lebruxon.goal.getY() - robotPose.getY();
+//
+//            double fieldTargetAngle = wrapToTwoPi(Math.atan2(dy, dx));
+//            double robotHeading     = wrapToTwoPi(Lebruxon.drivetrain.follower.getHeading());
+//            double normalizedTarget = wrapToTwoPi(fieldTargetAngle - robotHeading);
+//
+//            if (normalizedTarget > LOWER_DEADZONE && normalizedTarget < UPPER_DEADZONE) {
+//                currentTargetAngle = (normalizedPos <= LOWER_DEADZONE) ? LOWER_HOLD : UPPER_HOLD;
+//            } else {
+//                currentTargetAngle = normalizedTarget;
+//            }
+//
+//
+//        } else {
+//            currentTargetAngle = homePos;
+//        }
+//
+//        wasInDeadzone = inDeadzone;
+//
+//        // ====================================================================
+//        // 3. Virtual Linear Unrolling & Deadzone Blocking
+//        // ====================================================================
+//        double shiftedCurrent = wrapToTwoPi(normalizedPos     - UPPER_DEADZONE);
+//        double shiftedTarget  = wrapToTwoPi(currentTargetAngle - UPPER_DEADZONE);
+//
+//        double error = shiftedTarget - shiftedCurrent;
+//
+//        if (error >  LOWER_DEADZONE) error -= 2.0 * Math.PI;
+//        if (error < -LOWER_DEADZONE) error += 2.0 * Math.PI;
+//
+//        // ====================================================================
+//        // 4. PD Output
+//        // ====================================================================
+//        double toleranceRad = Math.toRadians(toleranceDeg);
+//        double derivative   = error - lastError;
+//
+//        boolean atHoldPos = (Math.abs(normalizedPos - LOWER_HOLD) < toleranceRad)
+//                || (Math.abs(normalizedPos - UPPER_HOLD) < toleranceRad);
+//        if (atHoldPos) derivative = 0;
+//
+//        lastError = error;
+//
+//        double power        = p * error + d * derivative;
+//        double clampedPower = clamp(power, -maxPower, maxPower);
+//
+//        leftServo.setPower(clampedPower);
+//        rightServo.setPower(clampedPower);
+//
+//        // Sync PIDFController for external atSetPoint() reads.
+//        controller.setP(p);
+//        controller.setD(d);
+//        controller.setTolerance(toleranceRad);
+//        controller.setSetPoint(currentTargetAngle);
+//        controller.calculate(normalizedPos);
+//    }
+//
+//    // =========================
+//    // Public Accessors
+//    // =========================
+//
+//    /**
+//     * Returns the encoder position corrected by the stored offset and normalized
+//     * to [0, 2PI). The offset is applied so that the logical zero matches the
+//     * angle that was saved in Storage at the end of the previous OpMode.
+//     */
+//    public double getNormalizedAngle() {
+//        int correctedTicks = encoderMotor.getCurrentPosition() - encoderOffset;
+//        double rawRad = correctedTicks / ticksPerRadian;
+//        return wrapToTwoPi(rawRad);
+//    }
+//
+//    public double getAngle() {
+//        return getNormalizedAngle();
+//    }
+//
+//    public double getTargetAngle() {
+//        return currentTargetAngle;
+//    }
+//
+//    // =========================
+//    // Utility
+//    // =========================
+//
+//    public static double wrapToTwoPi(double radians) {
+//        double wrapped = radians % (2.0 * Math.PI);
+//        if (wrapped < 0) wrapped += 2.0 * Math.PI;
+//        return wrapped;
+//    }
+//
+//    private static double clamp(double val, double min, double max) {
+//        return Math.max(min, Math.min(max, val));
+//    }
 package org.firstinspires.ftc.teamcode.utils.subsystems;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.controller.PIDFController;
 
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
+import org.firstinspires.ftc.teamcode.utils.Storage;
 
 @Configurable
 public class Turret extends SubsystemBase {
@@ -16,114 +284,293 @@ public class Turret extends SubsystemBase {
     // Hardware
     // =========================
 
-    public Servo turretServo, turretServo1;
+    public CRServo leftServo;
+    public CRServo rightServo;
+    public DcMotorEx encoderMotor;
 
     // =========================
-    // Geometry / Range
+    // Encoder / Gearing
     // =========================
 
-    // gearRatio = servo shaft degrees per turret degree.
-    // 210:210.6818 (turret:servo) -> 210.6818/210.
-    public static double gearRatio = 210.6818 / 210.0;
-    public static double servoRangeDeg = 355.0;
+    public static double encoderTicksPerRev = 8192.0;
+    public static double gearRatio = 208.0 / 71.0;
+    public static double ticksPerTurretRev = encoderTicksPerRev * gearRatio;
+    public static double ticksPerRadian = ticksPerTurretRev / (2.0 * Math.PI);
 
-    // =========================================================================
-    // Deadzone -- HARD BLOCK, solved by re-centering instead of path tracking
-    // =========================================================================
-    //
-    // 240deg-290deg (unit-circle, robot-relative) must never be entered.
-    //
-    // A position servo only has ONE path between any two commandable points,
-    // so the trick isn't routing around the deadzone -- it's placing the
-    // servo's own zero point so BOTH of its physical hard-stops fall inside
-    // the deadzone. Then the deadzone sits at the two extreme ends of the
-    // servo's range instead of in the middle of the working range, which
-    // makes the legal zone (everything else) one single unbroken interval.
-    // Moving between any two points inside a single interval can never
-    // leave it -- so a plain clamp is sufficient. No latch, no tracking of
-    // "where it last was" needed; every command is safe on its own.
-    //
-    // servoCenterDeg = the robot-relative angle that maps to servo position
-    // 0.5. Chosen as the point exactly opposite the deadzone's midpoint
-    // (265deg -> 85deg), so the deadzone lands symmetrically at both ends.
-    // Forward (0deg robot-relative) therefore is NOT at position 0.5 -- see
-    // angleToServoPos / the constant SERVO_CENTER_DEG below.
-    public static double deadzoneLowerDeg = 240.0;
-    public static double deadzoneUpperDeg = 290.0;
+    // =========================
+    // PID Tuning
+    // =========================
 
-    private static final double DEADZONE_CENTER_DEG =
-            (deadzoneLowerDeg + deadzoneUpperDeg) / 2.0; // 265
+    public static double p = 0.8;
+    public static double d = 0.002;
 
-    private static final double SERVO_CENTER_DEG =
-            wrapTo360(DEADZONE_CENTER_DEG + 180.0); // 85
+    public static double maxPower = 0.85;
+    public static double toleranceDeg = 0;
 
-    // Extra buffer kept clear of the deadzone edges (there's ~22.5deg of
-    // slack on each side between the deadzone edge and the servo's true
-    // mechanical limit, so this margin eats into that slack rather than
-    // needing to touch the hard stop).
-    public static double deadzoneMarginDeg = 5.0;
+    public PIDFController controller = new PIDFController(p, 0, d, 0);
+
+    // ===================================
+    // Hard Limits (Mapped 0 to 2PI Space)
+    // ===================================
+
+    // Safe Travel Region: Side A [0°, 240°] and Side B [290°, 360°]
+    // Prohibited Deadzone Region: (240°, 290°)
+    private static final double LOWER_DEADZONE = Math.toRadians(240.0);
+    private static final double UPPER_DEADZONE = Math.toRadians(290.0);
+
+    // Shift frame origin to deadzone midpoint so the 0/2PI wrap seam sits
+    // inside the deadzone — a region the turret never occupies — eliminating
+    // the jitter that happened when normalizedPos flickered across 0°/360°.
+    private static final double FRAME_SHIFT = Math.toRadians(265.0);
+
+    // Pre-shifted deadzone boundaries used for routing checks.
+    private static final double SHIFTED_LOWER = wrapToTwoPi(LOWER_DEADZONE - FRAME_SHIFT);
+    private static final double SHIFTED_UPPER = wrapToTwoPi(UPPER_DEADZONE - FRAME_SHIFT);
+
+    public static double deadzoneMarginDeg = 0.5;
+    private static double LOWER_HOLD;
+    private static double UPPER_HOLD;
 
     // =========================
     // Runtime State
     // =========================
 
-    public static double homePos = 0.0; // robot-relative radians, forward
+    public static double homePos = 0.0;
     public boolean enableAim = true;
+    public boolean AUTOenableAim = true;
 
-    // Plain instance field, purely for telemetry -- nothing safety-related
-    // depends on this, so it doesn't need to persist across OpModes.
-    private double lastCommandedAngle = homePos;
+    private double currentTargetAngle = homePos;
+    private double lastError = 0.0;
+
+    // Latched on deadzone entry. True = came from lower side (<=240°).
+    public boolean approachingFromLower = true;
+
+    // Hysteresis: enter latch at LOWER/UPPER_DEADZONE, exit only once the
+    // turret has fully cleared back past LOWER_HOLD or UPPER_HOLD.
+    public boolean inDeadzoneLatch = false;
 
     // =========================
-    // Velocity Feedforward ("shoot on the rotate")
+    // Encoder Offset
     // =========================
-    //
-    // Compensates for the target's apparent motion caused by the robot's
-    // OWN translation and rotation. This is NOT the full "shoot on the
-    // move" solution -- it doesn't account for the shot's own flight time
-    // vs a laterally-drifting ball, which needs a separate virtual-target
-    // offset layered on top of this. This just keeps the turret tracking
-    // tightly while the robot is moving/turning.
-    public static boolean enableFeedforward = true;
 
-    // TUNE: how long the servo takes to actually reach a commanded step.
-    // Bench-test by commanding a step change and timing to ~settled.
-    public static double feedforwardLagSeconds = 0.18;
-
-    private final ElapsedTime ffTimer = new ElapsedTime();
-    private double lastHeadingRad = 0.0;
-    private double lastHeadingTimestampSec = -1.0;
-
-    // Telemetry only.
-    public double lastLeadOffsetRad = 0.0;
+    private int encoderOffset = 0;
 
     // =========================
     // Constructor
     // =========================
 
     public Turret(HardwareMap hMap) {
-        turretServo = hMap.get(Servo.class, "turretLeft");
-        turretServo1 = hMap.get(Servo.class, "turretRight");
+        leftServo  = hMap.get(CRServo.class, "turretLeft");
+        rightServo = hMap.get(CRServo.class, "turretRight");
+        encoderMotor = hMap.get(DcMotorEx.class, "intake");
 
-        // Flip if the mount makes clockwise rotation decrease servo position.
-        // turretServo.setDirection(Servo.Direction.REVERSE);
+        encoderMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        leftServo.setDirection(CRServo.Direction.REVERSE);
+        rightServo.setDirection(CRServo.Direction.REVERSE);
 
-        // Not commanding a position here on purpose -- the hub keeps
-        // driving the last PWM signal between OpModes and the Axon's
-        // position reference doesn't drift, so the turret is already
-        // sitting wherever it physically was. The first update() call
-        // issues the first real move once aiming resolves a target.
+        controller.setTolerance(Math.toRadians(toleranceDeg));
+        controller.reset();
+
+        // Compute HOLD boundaries FIRST before anything reads them
+        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
+        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
+
+        // Reconstruct encoder offset using the exact snapshot pair from Storage
+        int ticksForSavedAngle = (int) Math.round(Storage.turretAngle * ticksPerRadian);
+        encoderOffset = Storage.turretEncoderSnapshot - ticksForSavedAngle;
+
+        // 2. Set the default target angle to.[= wherever Auto left off, NOT homePos
+        currentTargetAngle = Storage.turretAngle;
+
+        // Now these reads are valid
+        approachingFromLower = Storage.turretAngle <= LOWER_DEADZONE;
+        inDeadzoneLatch = Storage.turretAngle > LOWER_DEADZONE
+                && Storage.turretAngle < UPPER_DEADZONE;
+    }
+
+    // =========================
+    // Snapshot
+    // =========================
+
+    public void saveToStorage() {
+        // Save raw angle WITHOUT trim so the snapshot pair is self-consistent
+        int correctedTicks = encoderMotor.getCurrentPosition() - encoderOffset;
+        double rawAngleNoTrim = wrapToTwoPi(correctedTicks / ticksPerRadian);
+
+        Storage.turretAngle = rawAngleNoTrim;
+        Storage.turretEncoderSnapshot = encoderMotor.getCurrentPosition();
+        encoderTrim = 0;
     }
 
     // =========================
     // Update
     // =========================
 
+//    public void update() {
+//
+//        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
+//        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
+//
+//        double normalizedPos = getNormalizedAngle();
+//        Storage.turretAngle = normalizedPos;
+//
+//        // ====================================================================
+//        // 1. Hysteresis deadzone detection
+//        //
+//        // Enter latch the moment we cross into (240°, 290°).
+//        // Exit latch only once fully clear of LOWER_HOLD or UPPER_HOLD.
+//        // ====================================================================
+//        if (!inDeadzoneLatch) {
+//            if (normalizedPos > LOWER_DEADZONE && normalizedPos < UPPER_DEADZONE) {
+//                inDeadzoneLatch = true;
+//                approachingFromLower = (normalizedPos - LOWER_DEADZONE)
+//                        < (UPPER_DEADZONE - normalizedPos);
+//                lastError = 0.0;
+//            }
+//        } else {
+//            if (approachingFromLower && normalizedPos <= LOWER_HOLD) {
+//                inDeadzoneLatch = false;
+//            } else if (!approachingFromLower && normalizedPos >= UPPER_HOLD) {
+//                inDeadzoneLatch = false;
+//            }
+//        }
+//
+//        // ====================================================================
+//        // 2. Resolve Target Angle
+//        // ====================================================================
+//
+//        if (inDeadzoneLatch) {
+//            currentTargetAngle = approachingFromLower ? LOWER_HOLD : UPPER_HOLD;
+//
+//        } else if (enableAim || AUTOenableAim) {
+//            double dx, dy;
+//
+//            Pose robotPose = Lebruxon.drivetrain.follower.getPose();
+//
+//            if (Lebruxon.shooter.distance > 100) {
+//                dx = Lebruxon.targetFar.getX() - robotPose.getX();
+//                dy = Lebruxon.targetFar.getY() - robotPose.getY();
+//            }
+//            else {
+//                dx = Lebruxon.targetClose.getX() - robotPose.getX();
+//                dy = Lebruxon.targetClose.getY() - robotPose.getY();
+//            }
+//
+//            double fieldTargetAngle = wrapToTwoPi(Math.atan2(dy, dx));
+//            double robotHeading     = wrapToTwoPi(Lebruxon.drivetrain.follower.getHeading());
+//            double normalizedTarget = wrapToTwoPi(fieldTargetAngle - robotHeading);
+//
+//            if (normalizedTarget > LOWER_DEADZONE && normalizedTarget < UPPER_DEADZONE) {
+//                double distToLower = normalizedTarget - LOWER_DEADZONE;
+//                double distToUpper = UPPER_DEADZONE - normalizedTarget;
+//                currentTargetAngle = (distToLower <= distToUpper) ? LOWER_HOLD : UPPER_HOLD;
+//            } else {
+//                currentTargetAngle = normalizedTarget;
+//            }
+//
+//        } else {
+//            currentTargetAngle = homePos;
+//        }
+//
+//        // ====================================================================
+//        // 3. Compute error in the shifted frame
+//        //
+//        // Shift both angles by FRAME_SHIFT (265°) so the wrap seam sits inside
+//        // the deadzone. This eliminates the 0/2PI jitter.
+//        //
+//        // Then, if the shortest-path error in this frame would still route
+//        // through the deadzone (SHIFTED_LOWER to SHIFTED_UPPER), force it the
+//        // other way. In the shifted frame the deadzone runs from SHIFTED_LOWER
+//        // (~335°) to SHIFTED_UPPER (~25°) crossing the 0 point — meaning any
+//        // error that is negative and would reach below SHIFTED_UPPER, or
+//        // positive and would reach above SHIFTED_LOWER, is going through the
+//        // zone and must be flipped.
+//        // ====================================================================
+//        double shiftedPos    = wrapToTwoPi(normalizedPos      - FRAME_SHIFT);
+//        double shiftedTarget = wrapToTwoPi(currentTargetAngle - FRAME_SHIFT);
+//
+//        double error = shiftedTarget - shiftedPos;
+//
+//        if (error >  Math.PI) error -= 2.0 * Math.PI;
+//        if (error < -Math.PI) error += 2.0 * Math.PI;
+//
+//        // In the shifted frame the safe region is [SHIFTED_UPPER, SHIFTED_LOWER]
+//        // i.e. roughly [25°, 335°]. The deadzone straddles 0° in this frame.
+//        // A path going positive from shiftedPos crosses the deadzone if it would
+//        // exceed SHIFTED_LOWER. A path going negative crosses if it would drop
+//        // below SHIFTED_UPPER. Force the long way in those cases.
+//        if (!inDeadzoneLatch) {
+//            boolean onLowerShiftedSide = shiftedPos >= SHIFTED_UPPER && shiftedPos <= Math.PI * 2;
+//            boolean onUpperShiftedSide = shiftedPos >= 0 && shiftedPos <= SHIFTED_LOWER;
+//
+//            if (onUpperShiftedSide && error > 0 && (shiftedPos + error) > SHIFTED_LOWER) {
+//                error -= 2.0 * Math.PI;
+//            } else if (onLowerShiftedSide && error < 0 && (shiftedPos + error) < SHIFTED_UPPER) {
+//                error += 2.0 * Math.PI;
+//            }
+//        }
+//
+//        // ====================================================================
+//        // 4. PD Output
+//        // ====================================================================
+//        double toleranceRad = Math.toRadians(toleranceDeg);
+//        double derivative   = error - lastError;
+//
+//        boolean atHoldPos = (Math.abs(normalizedPos - LOWER_HOLD) < toleranceRad)
+//                || (Math.abs(normalizedPos - UPPER_HOLD) < toleranceRad);
+//        if (atHoldPos) derivative = 0;
+//
+//        lastError = error;
+//
+//        double power        = p * error + d * derivative;
+//        double clampedPower = clamp(power, -maxPower, maxPower);
+//
+//        leftServo.setPower(clampedPower);
+//        rightServo.setPower(clampedPower);
+//
+//        controller.setP(p);
+//        controller.setD(d);
+//        controller.setTolerance(toleranceRad);
+//        controller.setSetPoint(currentTargetAngle);
+//        controller.calculate(normalizedPos);
+//    }
+    // =========================
+    // Update
+    // =========================
+
     public void update() {
 
-        double rawTarget; // robot-relative radians
+        LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
+        UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
 
-        if (enableAim) {
+        double normalizedPos = getNormalizedAngle();
+        Storage.turretAngle = normalizedPos;
+
+        // ====================================================================
+        // 1. Hysteresis deadzone detection
+        // ====================================================================
+        if (!inDeadzoneLatch) {
+            if (normalizedPos > LOWER_DEADZONE && normalizedPos < UPPER_DEADZONE) {
+                inDeadzoneLatch = true;
+                approachingFromLower = (normalizedPos - LOWER_DEADZONE)
+                        < (UPPER_DEADZONE - normalizedPos);
+                lastError = 0.0;
+            }
+        } else {
+            if (approachingFromLower && normalizedPos <= LOWER_HOLD) {
+                inDeadzoneLatch = false;
+            } else if (!approachingFromLower && normalizedPos >= UPPER_HOLD) {
+                inDeadzoneLatch = false;
+            }
+        }
+
+        // ====================================================================
+        // 2. Resolve Target Angle
+        // ====================================================================
+        if (inDeadzoneLatch) {
+            currentTargetAngle = approachingFromLower ? LOWER_HOLD : UPPER_HOLD;
+
+        } else if (enableAim) {
             double dx, dy;
             Pose robotPose = Lebruxon.drivetrain.follower.getPose();
 
@@ -135,164 +582,101 @@ public class Turret extends SubsystemBase {
                 dy = Lebruxon.targetClose.getY() - robotPose.getY();
             }
 
-            double fieldTargetAngle = Math.atan2(dy, dx);
-            double robotHeading     = Lebruxon.drivetrain.follower.getHeading();
-            rawTarget = wrapToPi(fieldTargetAngle - robotHeading);
+            double fieldTargetAngle = wrapToTwoPi(Math.atan2(dy, dx));
+            double robotHeading     = wrapToTwoPi(Lebruxon.drivetrain.follower.getHeading());
+            double normalizedTarget = wrapToTwoPi(fieldTargetAngle - robotHeading);
 
-            if (enableFeedforward) {
-                lastLeadOffsetRad = computeLeadOffsetRad(dx, dy, robotHeading);
-                rawTarget = wrapToPi(rawTarget + lastLeadOffsetRad);
+            if (normalizedTarget > LOWER_DEADZONE && normalizedTarget < UPPER_DEADZONE) {
+                double distToLower = normalizedTarget - LOWER_DEADZONE;
+                double distToUpper = UPPER_DEADZONE - normalizedTarget;
+                currentTargetAngle = (distToLower <= distToUpper) ? LOWER_HOLD : UPPER_HOLD;
             } else {
-                lastLeadOffsetRad = 0.0;
+                currentTargetAngle = normalizedTarget;
             }
-            // The mapping below stays safe for any input regardless of the
-            // lead term's size -- it just clamps harder if the lead pushes
-            // the target further out toward the deadzone.
 
         } else {
-            rawTarget = homePos;
+            currentTargetAngle = homePos;
         }
 
-        lastCommandedAngle = rawTarget;
-        turretServo.setPosition(angleToServoPos(rawTarget));
-        turretServo1.setPosition(angleToServoPos(rawTarget));
+        // ====================================================================
+        // 3. Compute error in the shifted frame
+        // ====================================================================
+        double shiftedPos    = wrapToTwoPi(normalizedPos      - FRAME_SHIFT);
+        double shiftedTarget = wrapToTwoPi(currentTargetAngle - FRAME_SHIFT);
+
+        double error = shiftedTarget - shiftedPos;
+
+        if (error >  Math.PI) error -= 2.0 * Math.PI;
+        if (error < -Math.PI) error += 2.0 * Math.PI;
+
+        // Force long-way routing adjustments to avoid deadzone crossing
+        if (!inDeadzoneLatch) {
+            boolean onLowerShiftedSide = shiftedPos >= SHIFTED_UPPER && shiftedPos <= Math.PI * 2;
+            boolean onUpperShiftedSide = shiftedPos >= 0 && shiftedPos <= SHIFTED_LOWER;
+
+            if (onUpperShiftedSide && error > 0 && (shiftedPos + error) > SHIFTED_LOWER) {
+                error -= 2.0 * Math.PI;
+                lastError -= 2.0 * Math.PI; // FIX: Keep derivative stable!
+            } else if (onLowerShiftedSide && error < 0 && (shiftedPos + error) < SHIFTED_UPPER) {
+                error += 2.0 * Math.PI;
+                lastError += 2.0 * Math.PI; // FIX: Keep derivative stable!
+            }
+        }
+
+        // ====================================================================
+        // 4. PD Output
+        // ====================================================================
+        double toleranceRad = Math.toRadians(toleranceDeg);
+        double derivative   = error - lastError;
+
+        boolean atHoldPos = (Math.abs(normalizedPos - LOWER_HOLD) < toleranceRad)
+                || (Math.abs(normalizedPos - UPPER_HOLD) < toleranceRad);
+        if (atHoldPos) {
+            derivative = 0;
+        }
+
+        lastError = error;
+
+        double power        = p * error + d * derivative;
+        double clampedPower = clamp(power, -maxPower, maxPower);
+
+        leftServo.setPower(clampedPower);
+        rightServo.setPower(clampedPower);
+
+        controller.setP(p);
+        controller.setD(d);
+        controller.setTolerance(toleranceRad);
+        controller.setSetPoint(currentTargetAngle);
+        controller.calculate(normalizedPos);
     }
 
     // =========================
     // Public Accessors
     // =========================
 
+    public static double encoderTrim = 0;
+
+    public double getNormalizedAngle() {
+        int correctedTicks = encoderMotor.getCurrentPosition() - encoderOffset;
+        double rawRad = correctedTicks / ticksPerRadian;
+        return wrapToTwoPi(rawRad + encoderTrim);
+    }
+
+    public double getAngle() {
+        return getNormalizedAngle();
+    }
+
     public double getTargetAngle() {
-        return lastCommandedAngle;
-    }
-
-    /**
-     * True when a given robot-relative angle falls inside the hard-blocked
-     * band.
-     */
-    public static boolean isAngleInDeadzone(double robotRelativeRad) {
-        double deg = wrapTo360(Math.toDegrees(robotRelativeRad));
-        return deg > deadzoneLowerDeg && deg < deadzoneUpperDeg;
-    }
-
-    /**
-     * True when the turret's current commanded target is inside the
-     * deadzone -- meaning it's sitting at the nearest legal edge instead of
-     * the real target. Shooter logic should check this before firing.
-     */
-    public boolean isCurrentTargetBlocked() {
-        return isAngleInDeadzone(lastCommandedAngle);
-    }
-
-    // =========================
-    // Velocity Feedforward
-    // =========================
-
-    /**
-     * Computes a position lead (radians) to add to the raw tracking target,
-     * compensating for how much the robot-relative bearing to the goal will
-     * change in the time it takes the servo to catch up.
-     *
-     * @param dx target.x - robotPose.x (field frame)
-     * @param dy target.y - robotPose.y (field frame)
-     * @param robotHeading current robot heading (field frame, radians)
-     */
-    private double computeLeadOffsetRad(double dx, double dy, double robotHeading) {
-        double r2 = dx * dx + dy * dy;
-        if (r2 < 1e-6) return 0.0; // avoid blowing up right on top of the goal
-
-        // Field-relative robot velocity from the path follower.
-        // VERIFY: confirm getVelocity() returns field-frame Vector on your
-        // Pedro Pathing version -- swap accessors if the API differs.
-        com.pedropathing.math.Vector robotVel = Lebruxon.drivetrain.follower.getVelocity();
-        double vx = robotVel.getXComponent();
-        double vy = robotVel.getYComponent();
-
-        // Line-of-sight sweep rate: how fast the field-relative bearing to
-        // a stationary goal changes due to the robot's own translation.
-        //   omega_LOS = (dx*vy - dy*vx) / r^2
-        double omegaLosField = (dx * vy - dy * vx) / r2;
-
-        // Robot yaw rate via finite difference of heading. Swap for a
-        // direct accessor (e.g. an IMU/follower angular-velocity call) if
-        // one is available -- it'll be less noisy than differentiating.
-        double now = ffTimer.seconds();
-        double robotYawRate = 0.0;
-        if (lastHeadingTimestampSec >= 0) {
-            double dt = now - lastHeadingTimestampSec;
-            if (dt > 1e-4) {
-                robotYawRate = wrapToPi(robotHeading - lastHeadingRad) / dt;
-            }
-        }
-        lastHeadingRad = robotHeading;
-        lastHeadingTimestampSec = now;
-
-        // Rate of change of the ROBOT-RELATIVE target angle (what we
-        // actually command) is the field-relative sweep rate minus how
-        // fast our own heading is rotating out from under it.
-        double requiredAngularVelocity = omegaLosField - robotYawRate;
-
-        return requiredAngularVelocity * feedforwardLagSeconds;
+        return currentTargetAngle;
     }
 
     // =========================
     // Utility
     // =========================
 
-    /**
-     * Converts a robot-relative angle into a servo command position.
-     * Position 0.5 corresponds to SERVO_CENTER_DEG (85deg), NOT forward --
-     * this is what pushes the deadzone out to the two ends of the servo's
-     * range instead of the middle. The clamp then keeps every command
-     * inside the single legal interval, so crossing the deadzone is not
-     * physically producible by any sequence of calls to this method.
-     */
-    private static double angleToServoPos(double robotRelativeRad) {
-        // Stay in TURRET-frame degrees for the offset/clamp math, since
-        // SERVO_CENTER_DEG and the deadzone bounds are turret-relative.
-        // gearRatio is applied only at the very end, when converting the
-        // final turret-frame offset into a servo position delta -- mixing
-        // it in earlier caused the clamp to compare mismatched units for
-        // any gearRatio != 1.0.
-        double targetDeg = Math.toDegrees(robotRelativeRad);
-        double offsetDeg = angularDeltaDeg(SERVO_CENTER_DEG, targetDeg);
-
-        double deadzoneWidthDeg = deadzoneUpperDeg - deadzoneLowerDeg;
-        double usableHalfRangeDeg = (360.0 - deadzoneWidthDeg) / 2.0 - deadzoneMarginDeg;
-
-        // Also can't exceed what the servo can physically reach, expressed
-        // in turret-frame degrees. Matters once gearRatio != 1 -- a large
-        // enough ratio could make the servo's own reach the binding
-        // constraint instead of the deadzone geometry.
-        double turretRangeDeg = servoRangeDeg / gearRatio;
-        usableHalfRangeDeg = Math.min(usableHalfRangeDeg, turretRangeDeg / 2.0);
-
-        double clampedOffsetDeg = clamp(offsetDeg, -usableHalfRangeDeg, usableHalfRangeDeg);
-
-        // Convert the turret-frame offset into a servo position delta.
-        double servoOffsetDeg = clampedOffsetDeg * gearRatio;
-        double pos = 0.5 + servoOffsetDeg / servoRangeDeg;
-        return clamp(pos, 0.0, 1.0);
-    }
-
-    /** Shortest signed difference (toDeg - fromDeg), wrapped to (-180, 180]. */
-    private static double angularDeltaDeg(double fromDeg, double toDeg) {
-        double diff = (toDeg - fromDeg) % 360.0;
-        if (diff > 180.0) diff -= 360.0;
-        if (diff <= -180.0) diff += 360.0;
-        return diff;
-    }
-
-    public static double wrapTo360(double deg) {
-        double wrapped = deg % 360.0;
-        if (wrapped < 0) wrapped += 360.0;
-        return wrapped;
-    }
-
-    public static double wrapToPi(double radians) {
+    public static double wrapToTwoPi(double radians) {
         double wrapped = radians % (2.0 * Math.PI);
-        if (wrapped > Math.PI) wrapped -= 2.0 * Math.PI;
-        if (wrapped < -Math.PI) wrapped += 2.0 * Math.PI;
+        if (wrapped < 0) wrapped += 2.0 * Math.PI;
         return wrapped;
     }
 
@@ -300,3 +684,4 @@ public class Turret extends SubsystemBase {
         return Math.max(min, Math.min(max, val));
     }
 }
+//}
