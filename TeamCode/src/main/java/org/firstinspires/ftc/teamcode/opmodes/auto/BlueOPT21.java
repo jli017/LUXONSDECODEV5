@@ -34,7 +34,7 @@ import java.util.Set;
  *   intended scoring points before trusting this on the field.
  */
 @Autonomous(preselectTeleOp="TeleOp")
-public class BlueOPT18 extends CommandOpMode {
+public class BlueOPT21 extends CommandOpMode {
 
     // Indices (0-based, matching addPath() call order in Paths.BigBoiBlue)
     // of segments where the robot is heading back toward the goal and should
@@ -64,7 +64,7 @@ public class BlueOPT18 extends CommandOpMode {
                         Lebruxon.prime(),
 
                         new ParallelDeadlineGroup(
-                                new FollowPathCommand(paths.BigBoiBlue),
+                                new FollowPathCommand(paths.BiggerBoiBlue),
                                 new ShootAtPathWindows(SHOOT_WINDOW_PATH_INDICES)
                         ),
 

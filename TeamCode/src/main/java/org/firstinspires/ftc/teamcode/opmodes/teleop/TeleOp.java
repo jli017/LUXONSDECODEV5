@@ -144,10 +144,7 @@ public class TeleOp extends CommandOpMode {
 
         Drivetrain.turbo = gamepad1.square;
 
-        telemetry.addData("turret target (deg) ",  Math.toDegrees(Lebruxon.turret.getTargetAngle()));
         telemetry.addData("turret enableAim ",     Lebruxon.turret.enableAim);
-        telemetry.addData("turret homePos (deg) ", Math.toDegrees(Turret.homePos));
-        telemetry.addData("shooter error ",        Lebruxon.shooter.controller.getPositionError());
         telemetry.addData("robot x ",              Lebruxon.drivetrain.follower.getPose().getX());
         telemetry.addData("robot y ",              Lebruxon.drivetrain.follower.getPose().getY());
         telemetry.addData("heading (deg) ",        Math.toDegrees(Lebruxon.drivetrain.follower.getPose().getHeading()));
@@ -155,7 +152,6 @@ public class TeleOp extends CommandOpMode {
         telemetry.addData("shooter setpoint ",     Lebruxon.shooter.controller.getSetPoint());
         telemetry.addData("shooter atSetPoint ",   Lebruxon.shooter.controller.atSetPoint());
         telemetry.addData("shooter velo ",         Lebruxon.shooter.getVelocity());
-        telemetry.addData("turret target deg ", Math.toDegrees(Lebruxon.turret.getTargetAngle()));
         telemetry.addData("velo add ", Lebruxon.shooter.add);
         telemetry.update();
     }

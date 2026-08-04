@@ -1,4 +1,3 @@
-
 package org.firstinspires.ftc.teamcode.utils.subsystems;
 
 import static com.seattlesolvers.solverslib.util.MathUtils.clamp;
@@ -49,6 +48,19 @@ public class Shooter extends SubsystemBase {
 
     InterpLUT lutVelocity = new InterpLUT();
     InterpLUT lutHood = new InterpLUT();
+
+    // =========================
+    // Time-of-Flight LUT (shoot-on-the-move)
+    // =========================
+    // Maps distance (inches) -> ball flight time (seconds).
+    // PLACEHOLDER VALUES ONLY. These need to be bench/field measured, e.g. with
+    // a stopwatch or high-speed camera timing release-to-impact at each distance
+    // bucket, then replaced here. Roughly interpolated from the existing
+    // velocity LUT for now (higher exit velocity + flatter hood angle at range
+    // -> shorter flight time per inch, so the curve isn't perfectly linear).
+    InterpLUT lutTimeOfFlight = new InterpLUT();
+    public double timeOfFlight;
+
     public double distance;
     public double power;
     public boolean shooterBlah;
@@ -92,9 +104,19 @@ public class Shooter extends SubsystemBase {
         lutHood.add(122.5, 0.47);
         lutHood.add(200, 0.47);
 
+        // TODO(bench-tune): replace with measured flight times per distance.
+        // Close zone (< ~100") and far zone (>= ~100") both represented.
+        lutTimeOfFlight.add(0, 0.55);
+        lutTimeOfFlight.add(30, 0.65);
+        lutTimeOfFlight.add(61, 0.68);
+        lutTimeOfFlight.add(105.2, 0.7);
+        lutTimeOfFlight.add(122.5, 0.77);
+        lutTimeOfFlight.add(200, 0.90);
+
 
         lutVelocity.createLUT();
         lutHood.createLUT();
+        lutTimeOfFlight.createLUT();
         pos = Lebruxon.drivetrain.follower.getPose();
         controller.setP(P);
         controller.setF(F);
@@ -103,6 +125,7 @@ public class Shooter extends SubsystemBase {
         shooterBlah = false;
         Pose ShooterRobotPose = Lebruxon.drivetrain.follower.getPose();
         distance = Math.hypot(Lebruxon.goalShooter.getX()- ShooterRobotPose.getX(), Lebruxon.goalShooter.getY()-ShooterRobotPose.getY());
+        timeOfFlight = lutTimeOfFlight.get(distance);
     }
 
     public void update() {
@@ -114,6 +137,7 @@ public class Shooter extends SubsystemBase {
                         Lebruxon.goalShooter.getX() - pos.getX(),
                         Lebruxon.goalShooter.getY() - pos.getY()
                 );
+                timeOfFlight = lutTimeOfFlight.get(distance);
 
                 double currentVelocity = getVelocity();
                 double targetVelocity;
@@ -136,6 +160,7 @@ public class Shooter extends SubsystemBase {
                     Lebruxon.goalShooter.getX() - pos.getX(),
                     Lebruxon.goalShooter.getY() - pos.getY()
             );
+            timeOfFlight = lutTimeOfFlight.get(distance);
 
             double currentVelocity = getVelocity();
             double targetVelocity = (lutVelocity.get(distance) + add);
@@ -154,6 +179,7 @@ public class Shooter extends SubsystemBase {
                         Lebruxon.goalShooter.getX() - pos.getX(),
                         Lebruxon.goalShooter.getY() - pos.getY()
                 );
+                timeOfFlight = lutTimeOfFlight.get(distance);
 
                 double currentVelocity = getVelocity();
                 double targetVelocity = 0;
@@ -170,6 +196,7 @@ public class Shooter extends SubsystemBase {
                     Lebruxon.goalShooter.getX() - pos.getX(),
                     Lebruxon.goalShooter.getY() - pos.getY()
             );
+            timeOfFlight = lutTimeOfFlight.get(distance);
 
             double currentVelocity = getVelocity();
             double targetVelocity = (lutVelocity.get(distance) + add);
@@ -189,11 +216,27 @@ public class Shooter extends SubsystemBase {
 
     public void setVelocity(double velocity) {
         controller.setSetPoint(velocity);
-       // currentVelocity = velocity;
+        // currentVelocity = velocity;
     }
 
     public double getVelocity() {
         return shooter2.getCorrectedVelocity();
+    }
+
+    /**
+     * Returns the current placeholder time-of-flight estimate (seconds) for the
+     * shooter's last-computed distance. Turret.update() reads this to compute
+     * the shoot-on-the-move lead offset.
+     */
+    public double getTimeOfFlight() {
+        return timeOfFlight;
+    }
+
+    /**
+     * Looks up time-of-flight (seconds) for an arbitrary distance (inches).
+     */
+    public double getTimeOfFlight(double dist) {
+        return lutTimeOfFlight.get(dist);
     }
 
     public void setPower(double power) {

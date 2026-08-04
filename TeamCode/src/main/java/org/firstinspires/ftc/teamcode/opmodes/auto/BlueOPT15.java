@@ -110,6 +110,7 @@ public class BlueOPT15 extends CommandOpMode {
                     Lebruxon.intake.setMinPower(0);
                 }),
                 new InstantCommand(() -> Lebruxon.shooter.autoPower(false,false)),
+                new InstantCommand(() -> Lebruxon.shooter.idle = false),
                 new InstantCommand(() -> Lebruxon.turret.enableAim = false)
                     // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closepark)
 

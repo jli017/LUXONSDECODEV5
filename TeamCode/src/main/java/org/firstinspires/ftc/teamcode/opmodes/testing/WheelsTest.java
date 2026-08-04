@@ -12,7 +12,7 @@ public class WheelsTest extends OpMode {
     DcMotor wheel3;
     DcMotor wheel4;
 
-    DcMotor intake, transfer;
+//    DcMotor intake, transfer;
 
 
     //I like this code
@@ -24,14 +24,14 @@ public class WheelsTest extends OpMode {
      */
     @Override
     public void init() {
-        wheel1 = hardwareMap.get(DcMotor.class, "frontRightMotor");
-        wheel2 = hardwareMap.get(DcMotor.class, "backRightMotor");
-        wheel3 = hardwareMap.get(DcMotor.class, "frontLeftMotor");
-        wheel4 = hardwareMap.get(DcMotor.class, "backLeftMotor");
-        wheel3.setDirection(DcMotor.Direction.REVERSE);
-        wheel4.setDirection(DcMotor.Direction.REVERSE);
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        transfer = hardwareMap.get(DcMotor.class, "transfer");
+        wheel1 = hardwareMap.get(DcMotor.class, "fR");
+        wheel2 = hardwareMap.get(DcMotor.class, "bR");
+        wheel3 = hardwareMap.get(DcMotor.class, "fL");
+        wheel4 = hardwareMap.get(DcMotor.class, "bL");
+//        wheel3.setDirection(DcMotor.Direction.REVERSE);
+//        wheel4.setDirection(DcMotor.Direction.REVERSE);
+//        intake = hardwareMap.get(DcMotor.class, "intake");
+//        transfer = hardwareMap.get(DcMotor.class, "transfer");
     }
 
     /**
@@ -44,8 +44,8 @@ public class WheelsTest extends OpMode {
     public void loop() {
 
         // Robot-centric mecanum drive
-        transfer.setPower(gamepad1.right_trigger);
-        intake.setPower(gamepad1.left_trigger);
+//        transfer.setPower(gamepad1.right_trigger);
+//        intake.setPower(gamepad1.left_trigger);
 
         double y = -gamepad1.left_stick_y; // Forward/back
         double x = gamepad1.left_stick_x;  // Strafe

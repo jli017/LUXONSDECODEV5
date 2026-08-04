@@ -96,6 +96,10 @@ public class Paths {
     public PathChain turn1;
     public PathChain turn2;
 
+    public PathChain BigBoiBlue;
+    public PathChain BiggerBoiBlue;
+
+
     // All Close poses — declared without heading shortcuts so mirroring is explicit
     public Pose CloseshootPose        = new Pose(62, 85, Math.toRadians(170));
     public Pose CloseintakePPGPose    = new Pose(18, 85, Math.toRadians(180));
@@ -439,6 +443,182 @@ public class Paths {
         turn1 = follower.pathBuilder()
                 .addPath(new BezierPoint(CloseIntakeG1Pose2.getX(), CloseIntakeG1Pose2.getY()))
                 .setConstantHeadingInterpolation(CloseIntakeG1Pose2.getHeading())
+                .build();
+
+
+        //18 ball
+        BigBoiBlue = follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                new Pose(33.753, 132.664),
+                                new Pose(70.975, 77.006),
+                                new Pose(16.019, 82.482)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
+                .addPath(
+                        new BezierLine(
+                                new Pose(16.019, 82.482),
+                                new Pose(50.197, 75.399)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .addPath(
+                        new BezierCurve(
+                                new Pose(50.197, 75.399),
+                                new Pose(36.967, 56.468),
+                                new Pose(14.321, 60.577)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierLine(
+                                new Pose(14.321, 60.577),
+                                new Pose(54.108, 72.087)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .addPath(
+                        new BezierCurve(
+                                new Pose(54.108, 72.087),
+                                new Pose(31.876, 45.700),
+                                new Pose(11.465, 58.213)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierLine(
+                                new Pose(11.465, 58.213),
+                                new Pose(54.633, 72.752)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .setReversed()
+                .addPath(
+                        new BezierCurve(
+                                new Pose(54.633, 72.752),
+                                new Pose(31.876, 45.700),
+                                new Pose(11.465, 58.213)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierLine(
+                                new Pose(11.465, 58.213),
+                                new Pose(54.633, 72.752)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .addPath(
+                        new BezierCurve(
+                                new Pose(54.633, 72.752),
+                                new Pose(31.876, 45.700),
+                                new Pose(11.465, 58.213)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierCurve(
+                                new Pose(11.465, 58.213),
+                                new Pose(50.975, 64.492),
+                                new Pose(51.188, 114.864)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .build();
+
+        BiggerBoiBlue = follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                new Pose(33.753, 132.664),
+                                new Pose(86.608, 80.814),
+                                new Pose(21.431, 82.482)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
+                .addPath(
+                        new BezierLine(
+                                new Pose(21.431, 82.482),
+                                new Pose(50.197, 75.399)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .addPath(
+                        new BezierCurve(
+                                new Pose(50.197, 75.399),
+                                new Pose(36.967, 56.468),
+                                new Pose(14.321, 60.577)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierLine(
+                                new Pose(14.321, 60.577),
+                                new Pose(54.108, 72.087)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .addPath(
+                        new BezierCurve(
+                                new Pose(54.108, 72.087),
+                                new Pose(23.659, 52.314),
+                                new Pose(11.465, 58.213)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierLine(
+                                new Pose(11.465, 58.213),
+                                new Pose(54.633, 72.752)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .setReversed()
+                .addPath(
+                        new BezierCurve(
+                                new Pose(54.633, 72.752),
+                                new Pose(23.258, 52.715),
+                                new Pose(11.465, 58.213)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierLine(
+                                new Pose(11.465, 58.213),
+                                new Pose(54.633, 72.752)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .addPath(
+                        new BezierCurve(
+                                new Pose(54.633, 72.752),
+                                new Pose(23.258, 52.515),
+                                new Pose(11.465, 58.213)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierLine(
+                                new Pose(11.465, 58.213),
+                                new Pose(54.633, 72.752)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                .addPath(
+                        new BezierCurve(
+                                new Pose(54.633, 72.752),
+                                new Pose(41.916, 29.212),
+                                new Pose(15.988, 34.563)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .addPath(
+                        new BezierLine(
+                                new Pose(15.988, 34.563),
+                                new Pose(52.331, 112.107)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
     }
 }

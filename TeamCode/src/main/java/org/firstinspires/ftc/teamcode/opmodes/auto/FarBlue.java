@@ -53,9 +53,6 @@ public class FarBlue extends CommandOpMode {
                 }),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.intakepgp1),
                 new WaitCommand(200),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.checkIntakepgp1),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.intakepgp1again),
-                new WaitCommand(200),
                 new InstantCommand(() -> {
                     Lebruxon.intake.setPower(0, 0);
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -89,6 +86,8 @@ public class FarBlue extends CommandOpMode {
                 Lebruxon.reset(),
 
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.park)
+
+
         ));
 
     }

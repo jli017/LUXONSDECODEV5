@@ -268,6 +268,7 @@ package org.firstinspires.ftc.teamcode.utils.subsystems;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Vector;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -330,6 +331,22 @@ public class Turret extends SubsystemBase {
     public static double deadzoneMarginDeg = 0.5;
     private static double LOWER_HOLD;
     private static double UPPER_HOLD;
+
+    // =========================
+    // Shoot-on-the-Move
+    // =========================
+
+    // Master enable so lead compensation can be killed independently of enableAim
+    // (useful for A/B testing accuracy with/without lead during bring-up).
+    public static boolean enableLeadCompensation = true;
+
+    // Scales the raw robotVelocity * timeOfFlight lead offset. Start at 1.0 and
+    // tune down/up on the field once lutTimeOfFlight values are bench-measured.
+    public static double leadMultiplier = 1.0;
+
+    // Last computed lead offset (inches), exposed for logging/telemetry.
+    public double lastLeadX = 0.0;
+    public double lastLeadY = 0.0;
 
     // =========================
     // Runtime State
@@ -403,7 +420,7 @@ public class Turret extends SubsystemBase {
     }
 
     // =========================
-    // Update
+    // Update (older commented iterations preserved below, unchanged)
     // =========================
 
 //    public void update() {
@@ -580,6 +597,41 @@ public class Turret extends SubsystemBase {
             } else {
                 dx = Lebruxon.targetClose.getX() - robotPose.getX();
                 dy = Lebruxon.targetClose.getY() - robotPose.getY();
+            }
+
+            // ================================================================
+            // 2a. Shoot-on-the-move lead compensation
+            //
+            // A ball launched while the robot is translating inherits the
+            // robot's field-relative velocity. To land on the real target we
+            // aim at a "virtual target" shifted opposite the direction of
+            // travel by (robotVelocity * timeOfFlight) — i.e. we aim short of
+            // where the robot's motion would otherwise carry the shot, so the
+            // inherited velocity component cancels out over the flight time.
+            //
+            // timeOfFlight currently comes from Shooter's placeholder LUT
+            // (Shooter.lutTimeOfFlight) — bench-measure and replace those
+            // points before trusting this for real matches.
+            //
+            // NOTE: verify getVelocity()'s return type/units against your
+            // Pedro Pathing version — this assumes a field-relative Vector
+            // with getX()/getY() in the same units as robotPose (inches/sec).
+            // ================================================================
+            if (enableLeadCompensation) {
+                double timeOfFlight = Lebruxon.shooter.getTimeOfFlight(Lebruxon.shooter.distance);
+                Vector robotVel = Lebruxon.drivetrain.follower.getVelocity();
+
+                double leadX = robotVel.getXComponent() * timeOfFlight * leadMultiplier;
+                double leadY = robotVel.getYComponent() * timeOfFlight * leadMultiplier;
+
+                lastLeadX = leadX;
+                lastLeadY = leadY;
+
+                dx -= leadX;
+                dy -= leadY;
+            } else {
+                lastLeadX = 0.0;
+                lastLeadY = 0.0;
             }
 
             double fieldTargetAngle = wrapToTwoPi(Math.atan2(dy, dx));
