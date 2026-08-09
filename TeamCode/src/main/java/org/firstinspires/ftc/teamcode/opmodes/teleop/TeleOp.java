@@ -22,6 +22,11 @@ public class TeleOp extends CommandOpMode {
 
     public static double increment = 0.0175;
 
+    // Promoted from locals to fields so run() can poll Jonathan's triggers
+    // every loop for manual turret jogging (see run() below).
+    private GamepadEx samai;
+    private GamepadEx jonathan;
+
     @Override
     public void initialize() {
         Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
@@ -36,14 +41,14 @@ public class TeleOp extends CommandOpMode {
         Command shoot = Lebruxon.shoot();
         Command shootWithIntake = Lebruxon.shootWithIntake();
 
-        GamepadEx samai = new GamepadEx(gamepad1);
-        GamepadEx jonathan = new GamepadEx(gamepad2);
+        samai = new GamepadEx(gamepad1);
+        jonathan = new GamepadEx(gamepad2);
 
         // samai controls
         samai.getGamepadButton(GamepadKeys.Button.TRIANGLE)
-                        .whenPressed(new InstantCommand(() -> {
-                            Lebruxon.shooter.idle = !Lebruxon.shooter.idle;
-                        }));
+                .whenPressed(new InstantCommand(() -> {
+                    Lebruxon.shooter.idle = !Lebruxon.shooter.idle;
+                }));
         samai.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(prime);
         samai.getGamepadButton(GamepadKeys.Button.CIRCLE)
@@ -102,6 +107,16 @@ public class TeleOp extends CommandOpMode {
             Turret.homePos = savedHome;
         }));
 
+        // Manual turret home reset: only meant to be used while enableAim is
+        // OFF and Jonathan has jogged the turret (via triggers, see run()) to
+        // the correct physical home position. Zeros the encoder offset at the
+        // current position and makes that the new homePos.
+        jonathan.getGamepadButton(GamepadKeys.Button.DPAD_DOWN).whenPressed(new InstantCommand(() -> {
+            if (!Lebruxon.turret.enableAim) {
+                Lebruxon.turret.setHomeToCurrentPosition();
+            }
+        }));
+
         jonathan.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenPressed(new InstantCommand(() -> {
             Lebruxon.shooter.add -= 100;
         }));
@@ -124,7 +139,7 @@ public class TeleOp extends CommandOpMode {
 
         double intakePower, transferPower;
 
-        if (!gamepad1.cross) {
+        if (!gamepad1.square) {
             if (gamepad1.right_trigger < 0.2 && gamepad1.left_trigger > 0.2) {
                 intakePower = gamepad1.left_trigger;
                 transferPower = gamepad1.right_trigger;
@@ -142,9 +157,22 @@ public class TeleOp extends CommandOpMode {
             gamepad1.rumble(300);
         }
 
-        Drivetrain.turbo = gamepad1.square;
+        Drivetrain.lock = gamepad1.cross;
+
+        // Manual turret jog: only has effect in Turret.update() while
+        // enableAim is false. Right trigger = CW, left trigger = CCW —
+        // flip the sign below if that's backwards on the bench.
+        if (!Lebruxon.turret.enableAim) {
+            double ccw = jonathan.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
+            double cw  = jonathan.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER);
+            Lebruxon.turret.manualPower = cw - ccw;
+        } else {
+            Lebruxon.turret.manualPower = 0;
+        }
 
         telemetry.addData("turret enableAim ",     Lebruxon.turret.enableAim);
+        telemetry.addData("turret manual power ",  Lebruxon.turret.manualPower);
+        telemetry.addData("turret target vel (deg/s) ", Math.toDegrees(Lebruxon.turret.lastTargetAngularVelocity));
         telemetry.addData("robot x ",              Lebruxon.drivetrain.follower.getPose().getX());
         telemetry.addData("robot y ",              Lebruxon.drivetrain.follower.getPose().getY());
         telemetry.addData("heading (deg) ",        Math.toDegrees(Lebruxon.drivetrain.follower.getPose().getHeading()));

@@ -11,27 +11,27 @@ import com.seattlesolvers.solverslib.hardware.motors.CRServoEx;
 @Configurable
 @TeleOp
 public class ServoTest extends OpMode {
-    CRServo servo;
-    CRServo servo2;
+    Servo servo;
+    Servo servo2;
     @Override
     public void init() {
-        servo = hardwareMap.get(CRServo.class, "turretLeft");
-        servo2 = hardwareMap.get(CRServo.class, "turretRight");
+        servo = hardwareMap.get(Servo.class, "turretLeft");
+        servo2 = hardwareMap.get(Servo.class, "turretRight");
     }
 
     @Override
     public void loop() {
         if (gamepad1.left_bumper){
-            servo.setPower(1);
-            servo2.setPower(1);
+            servo.setPosition(1);
+            servo2.setPosition(1);
         }
         else if (gamepad1.right_bumper){
-            servo.setPower(-1);
-            servo2.setPower(-1);
+            servo.setPosition(-1);
+            servo2.setPosition(-1);
         }
         else {
-            servo.setPower(0);
-            servo2.setPower(0);
+            servo.setPosition(0);
+            servo2.setPosition(0);
         }
     }
 }

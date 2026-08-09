@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp
 public class WheelsTest extends OpMode {
@@ -12,7 +13,11 @@ public class WheelsTest extends OpMode {
     DcMotor wheel3;
     DcMotor wheel4;
 
-//    DcMotor intake, transfer;
+    DcMotor intake, shooter1, shooter2;
+
+    Servo stopper;
+
+    double power = 0;
 
 
     //I like this code
@@ -24,14 +29,19 @@ public class WheelsTest extends OpMode {
      */
     @Override
     public void init() {
-        wheel1 = hardwareMap.get(DcMotor.class, "fR");
-        wheel2 = hardwareMap.get(DcMotor.class, "bR");
-        wheel3 = hardwareMap.get(DcMotor.class, "fL");
-        wheel4 = hardwareMap.get(DcMotor.class, "bL");
+        wheel1 = hardwareMap.get(DcMotor.class, "frontright");
+        wheel2 = hardwareMap.get(DcMotor.class, "backright");
+        wheel3 = hardwareMap.get(DcMotor.class, "frontleft");
+        wheel4 = hardwareMap.get(DcMotor.class, "backleft");
+        wheel1.setDirection(DcMotor.Direction.REVERSE);
 //        wheel3.setDirection(DcMotor.Direction.REVERSE);
-//        wheel4.setDirection(DcMotor.Direction.REVERSE);
-//        intake = hardwareMap.get(DcMotor.class, "intake");
-//        transfer = hardwareMap.get(DcMotor.class, "transfer");
+        shooter1 = hardwareMap.get(DcMotor.class, "2");
+        shooter2 = hardwareMap.get(DcMotor.class, "3");
+        shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        intake.setDirection(DcMotor.Direction.REVERSE);
+        stopper = hardwareMap.get(Servo.class, "1");
+        stopper.setPosition(0.15);
     }
 
     /**
@@ -43,13 +53,26 @@ public class WheelsTest extends OpMode {
     @Override
     public void loop() {
 
+        if (gamepad1.dpadUpWasPressed()){
+            power +=  0.1;
+        }
+        if (gamepad1.dpadDownWasPressed()){
+            power -=  0.1;
+        }
+
+        if (gamepad1.cross){
+            stopper.setPosition(0.50);
+        }
+        else {
+            stopper.setPosition(0.15);
+        }
+
         // Robot-centric mecanum drive
-//        transfer.setPower(gamepad1.right_trigger);
-//        intake.setPower(gamepad1.left_trigger);
+        intake.setPower(gamepad1.left_trigger);
 
         double y = -gamepad1.left_stick_y; // Forward/back
-        double x = gamepad1.left_stick_x;  // Strafe
-        double rx = gamepad1.right_stick_x; // Rotate
+        double x = -gamepad1.left_stick_x;  // Strafe
+        double rx = 0.65 * gamepad1.right_stick_x; // Rotate
 
         // Mecanum formulas
         double frontLeft = y + x + rx;
@@ -82,5 +105,8 @@ public class WheelsTest extends OpMode {
         wheel4.setPower(backLeft);    // lB
         wheel1.setPower(frontRight);  // rF
         wheel2.setPower(backRight);   // rB
+        shooter1.setPower(power);
+        shooter2.setPower(power);
+
     }
 }

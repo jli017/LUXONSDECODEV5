@@ -4,6 +4,7 @@ import static com.seattlesolvers.solverslib.util.MathUtils.clamp;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Vector;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.Robot;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
@@ -30,7 +31,7 @@ public class Shooter extends SubsystemBase {
     public static double D = 0.0;
     public static double F = 0.000385;//0.0008
     public PIDFController controller = new PIDFController(P, 0, D, F);
-    public static double TOLERANCE = 80;
+    public static double TOLERANCE = 100;
 
     public static double STOPPER_OPEN = 0.35;
     public static double STOPPER_CLOSED = 0.14;
@@ -67,6 +68,25 @@ public class Shooter extends SubsystemBase {
     public Pose pos;
     //double currentVelocity = 0;
 
+    // =========================
+    // Shoot-on-the-move: radial velocity compensation
+    // =========================
+    // Turret's lead compensation only corrects the TANGENTIAL component of
+    // robot velocity (perpendicular to the line to the goal) — it shifts aim
+    // angle. The RADIAL component (straight toward/away from the goal)
+    // doesn't need a new aim angle, but it does change how far the shot
+    // effectively has to travel by the time it arrives, so it needs to
+    // change shot power/hood instead. effectiveDistance is `distance`
+    // corrected for that, and it's what actually gets fed into the
+    // velocity/hood LUTs below (raw `distance` is left alone since Turret
+    // still uses it for its own far/close target selection).
+    public static boolean enableRadialCompensation = true;
+    public static double radialMultiplier = 1.0;
+
+    // Positive = closing on the goal, negative = moving away. Telemetry only.
+    public double radialVelocity = 0.0;
+    public double effectiveDistance = 0.0;
+
     public Shooter(HardwareMap hMap) {
         shooter1 = new Motor(hMap, "shooterMotor", Motor.GoBILDA.BARE);
         shooter2 = new Motor(hMap, "shooterMotor2", Motor.GoBILDA.BARE);
@@ -76,10 +96,11 @@ public class Shooter extends SubsystemBase {
         hood = new ServoEx(hMap, "HoodServo");
         stopper = new ServoEx(hMap, "StopperServo");
 
-        shooter1.setInverted(false);
-        shooter2.setInverted(false);
+        shooter1.setInverted(true);
+        shooter2.setInverted(true);
         controller.setTolerance(TOLERANCE);
         controller.setSetPoint(0);
+        lutVelocity.add(-30, 1000);
         lutVelocity.add(0, 1300);
         lutVelocity.add(27.5, 1300);
         lutVelocity.add(32, 1380);
@@ -92,6 +113,7 @@ public class Shooter extends SubsystemBase {
         lutVelocity.add(122.5, 2080);
         lutVelocity.add(200, 2160);
 
+        lutHood.add(-30, 1);
         lutHood.add(0, 1);
         lutHood.add(27.5, 1);
         lutHood.add(32, 0.9);
@@ -106,6 +128,7 @@ public class Shooter extends SubsystemBase {
 
         // TODO(bench-tune): replace with measured flight times per distance.
         // Close zone (< ~100") and far zone (>= ~100") both represented.
+        lutTimeOfFlight.add(-30, 0.55);
         lutTimeOfFlight.add(0, 0.55);
         lutTimeOfFlight.add(30, 0.65);
         lutTimeOfFlight.add(61, 0.68);
@@ -117,96 +140,83 @@ public class Shooter extends SubsystemBase {
         lutVelocity.createLUT();
         lutHood.createLUT();
         lutTimeOfFlight.createLUT();
-        pos = Lebruxon.drivetrain.follower.getPose();
         controller.setP(P);
         controller.setF(F);
 
-
         shooterBlah = false;
-        Pose ShooterRobotPose = Lebruxon.drivetrain.follower.getPose();
-        distance = Math.hypot(Lebruxon.goalShooter.getX()- ShooterRobotPose.getX(), Lebruxon.goalShooter.getY()-ShooterRobotPose.getY());
-        timeOfFlight = lutTimeOfFlight.get(distance);
+        refreshDistance();
     }
 
     public void update() {
+        refreshDistance();
+
+        double targetVelocity;
         if (idle) {
             if (!shooterBlah) {
-                pos = Lebruxon.drivetrain.follower.getPose();
-
-                distance = Math.hypot(
-                        Lebruxon.goalShooter.getX() - pos.getX(),
-                        Lebruxon.goalShooter.getY() - pos.getY()
-                );
-                timeOfFlight = lutTimeOfFlight.get(distance);
-
-                double currentVelocity = getVelocity();
-                double targetVelocity;
-
-                if (distance < 100) {
-                    targetVelocity = (lutVelocity.get(distance) + add);
-                } else {
-                    targetVelocity = 1500;
-                }
-
-                controller.setSetPoint(targetVelocity); //PUT THIS BACK AFTER LUT
-                hood.set(lutHood.get(distance)); //PUT THIS BACK AFTER LUT
-                power = controller.calculate(currentVelocity);
-                setPower(power);
-                return;
+                targetVelocity = (distance < 100) ? (lutVelocity.get(effectiveDistance) + add) : 1500;
+            } else {
+                targetVelocity = lutVelocity.get(effectiveDistance) + add;
             }
-            pos = Lebruxon.drivetrain.follower.getPose();
-
-            distance = Math.hypot(
-                    Lebruxon.goalShooter.getX() - pos.getX(),
-                    Lebruxon.goalShooter.getY() - pos.getY()
-            );
-            timeOfFlight = lutTimeOfFlight.get(distance);
-
-            double currentVelocity = getVelocity();
-            double targetVelocity = (lutVelocity.get(distance) + add);
-
-            controller.setSetPoint(targetVelocity); //PUT THIS BACK AFTER LUT
-
-            hood.set(lutHood.get(distance)); //PUT THIS BACK AFTER LUT
-            power = controller.calculate(currentVelocity);
-            setPower(power);
-        }
-        else {
+        } else {
             if (!shooterBlah) {
-                pos = Lebruxon.drivetrain.follower.getPose();
-
-                distance = Math.hypot(
-                        Lebruxon.goalShooter.getX() - pos.getX(),
-                        Lebruxon.goalShooter.getY() - pos.getY()
-                );
-                timeOfFlight = lutTimeOfFlight.get(distance);
-
-                double currentVelocity = getVelocity();
-                double targetVelocity = 0;
-
-                controller.setSetPoint(0); //PUT THIS BACK AFTER LUT
-                hood.set(lutHood.get(distance)); //PUT THIS BACK AFTER LUT
-                power = controller.calculate(currentVelocity);
-                setPower(power);
-                return;
+                targetVelocity = 0;
+            } else {
+                targetVelocity = lutVelocity.get(effectiveDistance) + add;
             }
-            pos = Lebruxon.drivetrain.follower.getPose();
-
-            distance = Math.hypot(
-                    Lebruxon.goalShooter.getX() - pos.getX(),
-                    Lebruxon.goalShooter.getY() - pos.getY()
-            );
-            timeOfFlight = lutTimeOfFlight.get(distance);
-
-            double currentVelocity = getVelocity();
-            double targetVelocity = (lutVelocity.get(distance) + add);
-
-            controller.setSetPoint(targetVelocity); //PUT THIS BACK AFTER LUT
-
-            hood.set(lutHood.get(distance)); //PUT THIS BACK AFTER LUT
-            power = controller.calculate(currentVelocity);
-            setPower(power);
         }
+
+        driveToVelocity(targetVelocity);
+    }
+
+    // =========================
+    // Distance / radial-velocity refresh
+    // =========================
+
+    /**
+     * Refreshes pos, distance, timeOfFlight, and the radial-velocity-corrected
+     * effectiveDistance. Called once per update() so every branch below works
+     * off the same snapshot instead of re-deriving it four separate times.
+     */
+    private void refreshDistance() {
+        pos = Lebruxon.drivetrain.follower.getPose();
+        distance = Math.hypot(
+                Lebruxon.goalShooter.getX() - pos.getX(),
+                Lebruxon.goalShooter.getY() - pos.getY()
+        );
+        timeOfFlight = lutTimeOfFlight.get(distance);
+        updateRadialCompensation();
+    }
+
+    /**
+     * Projects robot velocity onto the robot->goal unit vector to get the
+     * radial (closing/opening) speed, then shifts distance by how much ground
+     * that speed covers over the ball's flight time. A single pass using the
+     * raw-distance timeOfFlight is accurate enough given how coarse
+     * lutTimeOfFlight already is — no need to iterate to convergence.
+     */
+    private void updateRadialCompensation() {
+        if (distance > 1e-6) {
+            Vector robotVel = Lebruxon.drivetrain.follower.getVelocity();
+            double ux = (Lebruxon.goalShooter.getX() - pos.getX()) / distance;
+            double uy = (Lebruxon.goalShooter.getY() - pos.getY()) / distance;
+            radialVelocity = robotVel.getXComponent() * ux + robotVel.getYComponent() * uy;
+        } else {
+            radialVelocity = 0.0;
+        }
+
+        if (enableRadialCompensation) {
+            effectiveDistance = Math.max(0.0, distance - radialVelocity * timeOfFlight * radialMultiplier);
+        } else {
+            effectiveDistance = distance;
+        }
+    }
+
+    private void driveToVelocity(double targetVelocity) {
+        controller.setSetPoint(targetVelocity);
+        hood.set(lutHood.get(effectiveDistance));
+        double currentVelocity = getVelocity();
+        power = controller.calculate(currentVelocity);
+        setPower(power);
     }
 
 

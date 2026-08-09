@@ -13,9 +13,9 @@ import com.seattlesolvers.solverslib.hardware.motors.Motor;
 public class ShooterTest extends OpMode {
     Motor flywheel1, flywheel2;
 
-    DcMotor intake, transfer;
-
-    Servo hood;
+//    DcMotor intake, transfer;
+//
+//    Servo hood;
 
     int speed = 0;
 
@@ -41,9 +41,9 @@ public class ShooterTest extends OpMode {
         flywheel1.setInverted(true);
         flywheel1.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         flywheel2.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        hood = hardwareMap.get(Servo.class, "hood");
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        transfer = hardwareMap.get(DcMotor.class, "transfer");
+//        hood = hardwareMap.get(Servo.class, "hood");
+//        intake = hardwareMap.get(DcMotor.class, "intake");
+//        transfer = hardwareMap.get(DcMotor.class, "transfer");
     }
 
     /**
@@ -56,8 +56,8 @@ public class ShooterTest extends OpMode {
     public void loop() {
 
         // Robot-centric mecanum drive
-        transfer.setPower(gamepad1.right_trigger);
-        intake.setPower(gamepad1.left_trigger);
+//        transfer.setPower(gamepad1.right_trigger);
+//        intake.setPower(gamepad1.left_trigger);
 
         if (gamepad1.dpadUpWasPressed()) {
             speed += 100;
@@ -79,7 +79,7 @@ public class ShooterTest extends OpMode {
 
         power = controller.calculate(speed);
 
-        hood.setPosition(position);
+//        hood.setPosition(position);
         flywheel1.set(power);
         flywheel2.set(power);
 
