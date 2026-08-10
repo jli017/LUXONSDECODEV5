@@ -200,7 +200,7 @@ public class Lebruxon {
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
                                 new WaitCommand(150),
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
-                                new WaitCommand(450),
+                                new WaitCommand(200),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);

@@ -29,11 +29,11 @@ public class BlueOPT18 extends CommandOpMode {
         schedule(new SequentialCommandGroup(
                 // preloaded 3
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.ScorePre),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                new WaitCommand(50),
+//                Lebruxon.prime(),
+//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+//                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 // intake middle
                 new InstantCommand(() -> Lebruxon.intake.setPower(1,1)),
@@ -55,11 +55,11 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score2),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                new WaitCommand(50),
+//                Lebruxon.prime(),
+//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+//                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 // gate
                 // new SequentialCommandGroup(
@@ -73,11 +73,11 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score3),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                new WaitCommand(50),
+//                Lebruxon.prime(),
+//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+//                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 // last row intake
                 new InstantCommand(() -> Lebruxon.intake.setPower(1,1)),
@@ -87,11 +87,11 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
 
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score4),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                new WaitCommand(50),
+//                Lebruxon.prime(),
+//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+//                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> Lebruxon.intake.setPower(1,1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.collect5),
@@ -100,11 +100,11 @@ public class BlueOPT18 extends CommandOpMode {
 
 
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score5),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                new WaitCommand(50),
+//                Lebruxon.prime(),
+//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+//                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.leave),
                 new InstantCommand(() -> Lebruxon.shooter.idle = false),
                 new InstantCommand(() -> Lebruxon.turret.enableAim = false)
