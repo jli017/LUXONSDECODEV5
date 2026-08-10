@@ -85,9 +85,10 @@ public class FarBlue extends CommandOpMode {
                 }),
                 Lebruxon.reset(),
 
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.park)
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.park),
 
-
+                new InstantCommand(() -> Lebruxon.shooter.idle = false),
+                new InstantCommand(() -> Lebruxon.turret.enableAim = false)
         ));
 
     }

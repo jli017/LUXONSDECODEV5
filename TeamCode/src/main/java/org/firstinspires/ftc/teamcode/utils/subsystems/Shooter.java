@@ -83,6 +83,18 @@ public class Shooter extends SubsystemBase {
     public static boolean enableRadialCompensation = true;
     public static double radialMultiplier = 1.0;
 
+    // TODO(bench-tune): alpha for the radial-velocity low-pass filter below.
+    // Raw robotVel is noisy frame-to-frame, which was making effectiveDistance
+    // (and therefore the shooter's velocity setpoint) chatter every loop and
+    // preventing controller.atSetPoint() from ever settling while translating.
+    // Lower = smoother setpoint but more lag reacting to real speed changes;
+    // higher = faster reaction but more residual chatter. Start around 0.15-0.2
+    // and tune on the bench by watching radialVelocity telemetry while driving
+    // — want the chatter mostly gone but still tracking a deliberate speed
+    // change (e.g. driver stopping) within a few hundred ms.
+    public static double radialVelocityFilterAlpha = 0.15;
+    private double filteredRadialVelocity = 0.0;
+
     // Positive = closing on the goal, negative = moving away. Telemetry only.
     public double radialVelocity = 0.0;
     public double effectiveDistance = 0.0;
@@ -128,13 +140,13 @@ public class Shooter extends SubsystemBase {
 
         // TODO(bench-tune): replace with measured flight times per distance.
         // Close zone (< ~100") and far zone (>= ~100") both represented.
-        lutTimeOfFlight.add(-30, 0.55);
-        lutTimeOfFlight.add(0, 0.55);
-        lutTimeOfFlight.add(30, 0.65);
-        lutTimeOfFlight.add(61, 0.68);
-        lutTimeOfFlight.add(105.2, 0.7);
-        lutTimeOfFlight.add(122.5, 0.77);
-        lutTimeOfFlight.add(200, 0.90);
+        lutTimeOfFlight.add(-30, 0.7);
+        lutTimeOfFlight.add(0, 0.7);
+        lutTimeOfFlight.add(30, 0.8);
+        lutTimeOfFlight.add(61, 1);
+        lutTimeOfFlight.add(105.2, 1.3);
+        lutTimeOfFlight.add(122.5, 1.7);
+        lutTimeOfFlight.add(200, 2);
 
 
         lutVelocity.createLUT();
@@ -189,20 +201,28 @@ public class Shooter extends SubsystemBase {
 
     /**
      * Projects robot velocity onto the robot->goal unit vector to get the
-     * radial (closing/opening) speed, then shifts distance by how much ground
-     * that speed covers over the ball's flight time. A single pass using the
-     * raw-distance timeOfFlight is accurate enough given how coarse
-     * lutTimeOfFlight already is — no need to iterate to convergence.
+     * radial (closing/opening) speed, low-pass filters it (raw follower
+     * velocity is noisy frame-to-frame, which was making the downstream
+     * shooter target velocity chatter every loop and never settle inside
+     * atSetPoint() while translating), then shifts distance by how much
+     * ground that filtered speed covers over the ball's flight time. A
+     * single pass using the raw-distance timeOfFlight is accurate enough
+     * given how coarse lutTimeOfFlight already is — no need to iterate to
+     * convergence.
      */
     private void updateRadialCompensation() {
+        double rawRadialVelocity;
         if (distance > 1e-6) {
             Vector robotVel = Lebruxon.drivetrain.follower.getVelocity();
             double ux = (Lebruxon.goalShooter.getX() - pos.getX()) / distance;
             double uy = (Lebruxon.goalShooter.getY() - pos.getY()) / distance;
-            radialVelocity = robotVel.getXComponent() * ux + robotVel.getYComponent() * uy;
+            rawRadialVelocity = robotVel.getXComponent() * ux + robotVel.getYComponent() * uy;
         } else {
-            radialVelocity = 0.0;
+            rawRadialVelocity = 0.0;
         }
+
+        filteredRadialVelocity += radialVelocityFilterAlpha * (rawRadialVelocity - filteredRadialVelocity);
+        radialVelocity = filteredRadialVelocity;
 
         if (enableRadialCompensation) {
             effectiveDistance = Math.max(0.0, distance - radialVelocity * timeOfFlight * radialMultiplier);

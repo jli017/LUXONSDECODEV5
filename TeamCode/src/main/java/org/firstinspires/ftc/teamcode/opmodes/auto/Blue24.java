@@ -23,15 +23,13 @@
 //        paths2 = new Paths2(Lebruxon.drivetrain.follower, Lebruxon.Alliance.BLUESQ);
 //
 //        Lebruxon.turret.enableAim = true;
+//        Lebruxon.shooter.idle = true;
 //
 //        Lebruxon.drivetrain.follower.setMaxPower(1);
 //
 //        schedule(new SequentialCommandGroup(
 //                // preloaded 3
 //                new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.ScorePre),
-//                Lebruxon.prime(),
-//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-//                new WaitCommand(125),
 //                Lebruxon.shootWithIntake(),
 //                Lebruxon.reset(),
 //
@@ -41,11 +39,7 @@
 //                new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.collect1),
 //                new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
 //                new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.Score1),
-//                Lebruxon.prime(),
-//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-//                new WaitCommand(150),
 //                Lebruxon.shootWithIntake(),
-//                Lebruxon.reset(),
 //
 //                // gate 1
 //               // new SequentialCommandGroup(
@@ -58,11 +52,7 @@
 //                new WaitCommand(2000),
 //                new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
 //                new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score2),
-//                new WaitCommand(300),
 //                new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
-//                Lebruxon.prime(),
-//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-//                new WaitCommand(125),
 //                Lebruxon.shootWithIntake(),
 //                Lebruxon.reset(),
 //
@@ -77,11 +67,7 @@
 //                new WaitCommand(2200),
 //                new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
 //                new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score3),
-//                new WaitCommand(400),
 //                new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
-//                Lebruxon.prime(),
-//                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-//                new WaitCommand(125),
 //                Lebruxon.shootWithIntake(),
 //                Lebruxon.reset(),
 //
@@ -111,8 +97,9 @@
 //                Lebruxon.shootWithIntake(),
 //                Lebruxon.reset(),
 //                new InstantCommand(() -> Lebruxon.shooter.autoPower(false,false)),
-//                new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.leave)
-//
+//                new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.leave),
+//                new InstantCommand(() -> Lebruxon.shooter.idle = false),
+//                new InstantCommand(() -> Lebruxon.turret.enableAim = false)
 //        ));
 //    }
 //    @Override

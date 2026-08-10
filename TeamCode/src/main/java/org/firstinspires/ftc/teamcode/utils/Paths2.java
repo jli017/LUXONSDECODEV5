@@ -33,11 +33,15 @@ public class Paths2 {
     public Pose controlIntake1 = new Pose(73.2, 54.5);
     //public Pose opengate = new Pose(17.3, 69, Math.toRadians(270));
     public Pose shootload1 = new Pose(53, 80, Math.toRadians(180));
-    public Pose collectgate1 = new Pose(13, 63, Math.toRadians(155));
+//    public Pose collectgate1 = new Pose(13, 63, Math.toRadians(145));
     //public Pose collectcontrol1 = new Pose(52, 43);
+    public Pose collectgate1 = new Pose(11.46, 58.21, Math.toRadians(145));
+    public Pose collectcontrol1 = new Pose(23.66, 52.3);
     public Pose shootgate1 = new Pose(53, 80, Math.toRadians(180));
-    public Pose collectgate2 = new Pose(13, 63.5,Math.toRadians(155));
+    //public Pose collectgate2 = new Pose(13, 63.5,Math.toRadians(145));
     //public Pose collectcontrol2 = new Pose(52, 43);
+    public Pose collectgate2 = new Pose(11.46, 58.21, Math.toRadians(145));
+    public Pose collectcontrol2 = new Pose(23.66, 52.3);
     public Pose shootgate2 = new Pose(53, 80, Math.toRadians(180));
     public Pose intake2 = new Pose(20, 35, Math.toRadians(180));
     public Pose controlIntake2 = new Pose(72, 33);
@@ -121,9 +125,10 @@ public class Paths2 {
         collect1 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierCurve(shootpre, controlIntake1, intake1 )
+                        new BezierCurve(shootpre, controlIntake1, intake1)
                 )
-                .setLinearHeadingInterpolation(shootpre.getHeading(), intake1.getHeading())
+                //.setLinearHeadingInterpolation(shootpre.getHeading(), intake1.getHeading())
+                .setTangentHeadingInterpolation()
                 .setBrakingStrength(1.22)
                 .build();
 
@@ -137,12 +142,20 @@ public class Paths2 {
                 .setBrakingStrength(1.22)
                 .build();
 
+//        collect2 = follower
+//                .pathBuilder()
+//                .addPath(
+//                        new BezierLine(shootload1, collectgate1)
+//                )
+//                .setLinearHeadingInterpolation(shootload1.getHeading(), collectgate1.getHeading())
+//                .setBrakingStrength(1.5)
+//                .build();
         collect2 = follower
-                .pathBuilder() 
+                .pathBuilder()
                 .addPath(
-                        new BezierLine(shootload1, collectgate1)
+                        new BezierCurve(shootload1, collectcontrol1, collectgate1)
                 )
-                .setLinearHeadingInterpolation(shootload1.getHeading(), collectgate1.getHeading())
+                .setTangentHeadingInterpolation()
                 .setBrakingStrength(1.5)
                 .build();
 
@@ -151,16 +164,24 @@ public class Paths2 {
                 .addPath(
                         new BezierLine(collectgate1, shootgate1)
                 )
-                .setLinearHeadingInterpolation(collectgate1.getHeading(), shootgate1.getHeading())
+                .setLinearHeadingInterpolation(shootgate1.getHeading(), shootgate1.getHeading())
                 .setBrakingStrength(1.22)
                 .build();
 
+//        collect3 = follower
+//                .pathBuilder()
+//                .addPath(
+//                        new BezierLine(shootgate1, collectgate2)
+//                )
+//                .setLinearHeadingInterpolation(shootgate1.getHeading(), collectgate2.getHeading())
+//                .setBrakingStrength(1.5)
+//                .build();
         collect3 = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(shootgate1, collectgate2)
+                        new BezierCurve(shootgate1, collectcontrol2, collectgate2)
                 )
-                .setLinearHeadingInterpolation(shootgate1.getHeading(), collectgate2.getHeading())
+                .setTangentHeadingInterpolation()
                 .setBrakingStrength(1.5)
                 .build();
 
@@ -169,7 +190,7 @@ public class Paths2 {
                 .addPath(
                         new BezierLine(collectgate2, shootgate2)
                 )
-                .setLinearHeadingInterpolation(collectgate2.getHeading(), shootgate2.getHeading())
+                .setLinearHeadingInterpolation(shootgate2.getHeading(), shootgate2.getHeading())
                 .setBrakingStrength(1.22)
                 .build();
 
@@ -178,7 +199,7 @@ public class Paths2 {
                 .addPath(
                         new BezierCurve(shootgate2, controlIntake2, intake2)
                 )
-                .setLinearHeadingInterpolation(shootgate2.getHeading(), intake2.getHeading())
+                .setTangentHeadingInterpolation()
                 .setBrakingStrength(1.22)
                 .build();
 
