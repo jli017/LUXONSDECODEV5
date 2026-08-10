@@ -29,6 +29,9 @@ public class BlueOPT18 extends CommandOpMode {
         schedule(new SequentialCommandGroup(
                 // preloaded 3
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.ScorePre),
+                Lebruxon.prime(),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
@@ -52,6 +55,9 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score2),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
+                Lebruxon.prime(),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
@@ -67,6 +73,9 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score3),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
+                Lebruxon.prime(),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
@@ -78,6 +87,9 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
 
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score4),
+                Lebruxon.prime(),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
@@ -86,7 +98,11 @@ public class BlueOPT18 extends CommandOpMode {
                 new WaitCommand(150),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
 
+
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.score5),
+                Lebruxon.prime(),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths2.leave),
