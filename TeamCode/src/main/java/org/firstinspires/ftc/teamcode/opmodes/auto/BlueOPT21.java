@@ -55,8 +55,8 @@ public class BlueOPT21 extends CommandOpMode {
         Lebruxon.init(hardwareMap, Lebruxon.MatchState.AUTO, Lebruxon.Alliance.BLUESQ);
         paths = new Paths(Lebruxon.drivetrain.follower, Lebruxon.Alliance.BLUESQ);
 
-        Lebruxon.turret.enableAim = true;
-        Lebruxon.shooter.idle = true;
+        Lebruxon.turret.enableAim = false;
+        Lebruxon.shooter.idle = false;
 
         // Runs Lebruxon.update() (turret/shooter/drivetrain update + lead
         // compensation) every scheduler tick for the whole OpMode.
@@ -142,12 +142,11 @@ public class BlueOPT21 extends CommandOpMode {
                 return;
             }
 
-            boolean turretReady   = Lebruxon.turret.controller.atSetPoint();
-            boolean shooterReady  = Lebruxon.shooter.controller.atSetPoint();
-            boolean positionReady = Lebruxon.drivetrain.follower.getPose().getX() > 50;
+            boolean positionReady = Lebruxon.drivetrain.follower.getPose().getX() > 45;
 
-            if (turretReady && shooterReady && positionReady) {
-                CommandScheduler.getInstance().schedule(Lebruxon.shootWithIntake());
+            if (positionReady) {
+                CommandScheduler.getInstance().schedule(Lebruxon.shootNow());
+                //CommandScheduler.getInstance().schedule(Lebruxon.shootWithIntake());
                 lastFiredIndex = currentIndex;
             }
         }

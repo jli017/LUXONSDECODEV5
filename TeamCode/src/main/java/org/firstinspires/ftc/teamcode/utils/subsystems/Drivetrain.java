@@ -23,8 +23,8 @@ public class Drivetrain extends SubsystemBase {
     // =========================
 
     // Target heading (degrees) to lock to, per alliance, while `lock` is true.
-    public static double blueLockHeadingDeg = 145.0;
-    public static double redLockHeadingDeg = 35.0;
+    public static double blueLockHeadingDeg = 150.0;
+    public static double redLockHeadingDeg = 30.0;
 
     // PIDF gains for the heading-lock loop, using SolversLib's PIDFController
     // (same class Turret.java uses). IMPORTANT: the error fed into this
@@ -36,7 +36,7 @@ public class Drivetrain extends SubsystemBase {
     // e.g. P = 0.3 gives ~0.94 power at the worst-case error, which is why
     // that's the starting point below, not something like 0.6 which would
     // already be commanding full+ power (get clamped) for any error over ~60°.
-    public static double headingLockP = 0.3;
+    public static double headingLockP = 0.4;
     public static double headingLockI = 0.0;
     public static double headingLockD = 0.02;
     public static double headingLockF = 0.0;

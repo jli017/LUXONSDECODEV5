@@ -72,6 +72,6 @@ public class Intake extends SubsystemBase {
             transfer.set(transferPower);
         }
 
-        dist = distance.getDistance(DistanceUnit.CM);
+        dist = distance.getDistance(DistanceUnit.INCH);
     }
 }

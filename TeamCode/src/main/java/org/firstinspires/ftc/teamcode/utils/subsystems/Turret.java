@@ -4,6 +4,7 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -37,7 +38,7 @@ public class Turret extends SubsystemBase {
     // PID Tuning
     // =========================
 
-    public static double p = 0.8;
+    public static double p = 0.7;
     public static double d = 0.002;
 
     // Angular-velocity feedforward gain. A pure P(D) loop only ever reacts to
@@ -61,7 +62,7 @@ public class Turret extends SubsystemBase {
 
     // Safe Travel Region: Side A [0°, 240°] and Side B [290°, 360°]
     // Prohibited Deadzone Region: (240°, 290°)
-    private static final double LOWER_DEADZONE = Math.toRadians(240.0);
+    private static final double LOWER_DEADZONE = Math.toRadians(245.0);
     private static final double UPPER_DEADZONE = Math.toRadians(290.0);
 
     // Shift frame origin to deadzone midpoint so the 0/2PI wrap seam sits
@@ -94,13 +95,59 @@ public class Turret extends SubsystemBase {
     public double lastLeadY = 0.0;
 
     // =========================
+    // Predictive aim lock (used while intaking, before a shoot window)
+    // =========================
+    //
+    // enableAim tracks the goal LIVE off the robot's current pose every loop,
+    // which is correct right before/during a shot but is wasted, noisy motion
+    // while just driving around collecting balls. Since auto paths are known
+    // ahead of time, the caller (e.g. the auto OpMode) can instead call
+    // setLockedTarget() once with the pose we expect to be at for the NEXT
+    // shot. That resolves a single fieldTargetAngle up front — no lead
+    // compensation, no re-deriving dx/dy from a constantly-changing distance —
+    // and update() just keeps reprojecting that fixed field angle through the
+    // CURRENT heading every loop (since heading can still change while we
+    // drive/intake). Deliberately alliance-agnostic: it only reads from
+    // Lebruxon.goalShooter/targetClose/targetFar, which are already resolved
+    // per-alliance in Lebruxon.init() — no mirroring math lives here.
+    public boolean lockedAim = false;
+    private double lockedFieldAngle = 0.0;
+
+    /**
+     * Call once (e.g. on entering a collection segment) with the field pose
+     * the robot is expected to be at for the NEXT shot. Picks targetClose vs
+     * targetFar the same way the live-aim path does, based on distance from
+     * that predicted point to the goal.
+     */
+    public void setLockedTarget(double predictedX, double predictedY) {
+        double distToGoal = Math.hypot(
+                Lebruxon.goalShooter.getX() - predictedX,
+                Lebruxon.goalShooter.getY() - predictedY
+        );
+
+        com.seattlesolvers.solverslib.geometry.Vector2d target =
+                (distToGoal > 100) ? Lebruxon.targetFar : Lebruxon.targetClose;
+
+        double dx = target.getX() - predictedX;
+        double dy = target.getY() - predictedY;
+
+        lockedFieldAngle = wrapToTwoPi(Math.atan2(dy, dx));
+        lockedAim = true;
+    }
+
+    /** Call on entering the next shoot-window segment to fall back to full
+     *  live tracking (with lead compensation) for final approach precision. */
+    public void clearLockedTarget() {
+        lockedAim = false;
+    }
+
+    // =========================
     // Runtime State
     // =========================
 
     public static double homePos = 0.0;
-    public boolean enableAim = true;
-    public boolean AUTOenableAim = true;
 
+    public boolean enableAim = true;
     private double currentTargetAngle = homePos;
     private double lastError = 0.0;
 
@@ -231,8 +278,8 @@ public class Turret extends SubsystemBase {
         // ====================================================================
         if (!enableAim && Math.abs(manualPower) > 0.02) {
             double clampedManual = clamp(manualPower, -1.0, 1.0) * manualJogPower;
-            leftServo.setPower(clampedManual);
-            rightServo.setPower(clampedManual);
+            leftServo.setPower(-clampedManual);
+            rightServo.setPower(-clampedManual);
 
             // Keep PD/feedforward state synced to wherever we physically are so
             // releasing the trigger doesn't cause a snap back toward a stale target.
@@ -270,6 +317,21 @@ public class Turret extends SubsystemBase {
         // ====================================================================
         if (inDeadzoneLatch) {
             currentTargetAngle = approachingFromLower ? LOWER_HOLD : UPPER_HOLD;
+
+        } else if (lockedAim) {
+            // Predictive lock: field angle was already resolved once by
+            // setLockedTarget(); only reproject it through the CURRENT
+            // heading, since heading can still change while intaking.
+            double robotHeading = wrapToTwoPi(Lebruxon.drivetrain.follower.getHeading());
+            double normalizedTarget = wrapToTwoPi(lockedFieldAngle - robotHeading);
+
+            if (normalizedTarget > LOWER_DEADZONE && normalizedTarget < UPPER_DEADZONE) {
+                double distToLower = normalizedTarget - LOWER_DEADZONE;
+                double distToUpper = UPPER_DEADZONE - normalizedTarget;
+                currentTargetAngle = (distToLower <= distToUpper) ? LOWER_HOLD : UPPER_HOLD;
+            } else {
+                currentTargetAngle = normalizedTarget;
+            }
 
         } else if (enableAim) {
             double dx, dy;

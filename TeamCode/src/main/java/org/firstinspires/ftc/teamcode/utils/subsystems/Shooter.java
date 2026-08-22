@@ -99,6 +99,61 @@ public class Shooter extends SubsystemBase {
     public double radialVelocity = 0.0;
     public double effectiveDistance = 0.0;
 
+    // =========================
+    // Flywheel acceleration feedforward
+    // =========================
+    // The P+F terms on `controller` only react to velocity ERROR (or hold a
+    // constant speed via F) — while translating, effectiveDistance keeps
+    // moving, so the velocity setpoint itself keeps moving, and a pure
+    // feedback loop structurally lags a moving setpoint (same reason Turret
+    // has kV: reacting after error is always one step behind). This estimates
+    // how fast the setpoint itself is currently changing (by sampling the
+    // slope of lutVelocity at the current effectiveDistance, scaled by how
+    // fast effectiveDistance is changing) and feeds that forward directly as
+    // extra power, so the flywheel is already trying to accelerate/decelerate
+    // in step with the target instead of only chasing it after the fact.
+    //
+    // TODO(bench-tune): wheelAccelKA is 0 (off) until tuned. Units are
+    // power-per-(ticks/sec per sec) — highly dependent on flywheel inertia and
+    // motor characteristics, so there's no sane default. Bring enableRadialCompensation
+    // + the filter above up first, confirm atSetPoint() is behaving, THEN raise
+    // this from 0 in small steps while translating toward/away from the goal
+    // and watching how much sooner atSetPoint() fires without power overshoot.
+    public static boolean enableWheelAccelFeedforward = true;
+    public static double wheelAccelKA = 0.0001;
+    public static double accelSamplingDt = 0.05; // seconds, for LUT slope sampling
+
+    // =========================
+    // Predictive velocity lock (used while intaking, before a shoot window)
+    // =========================
+    //
+    // While collecting, `idle`'s effectiveDistance-based velocity keeps
+    // re-solving off the live (constantly changing) distance to the goal,
+    // which just adds flywheel setpoint chatter for no benefit — we're not
+    // about to fire. Since auto paths are known ahead of time, the caller can
+    // instead call lockToDistance() once with the distance expected at the
+    // NEXT shot, holding the flywheel at that final target speed the whole
+    // time we're driving/intaking so it's already settled by the time we
+    // re-enter a shoot window. Hood is intentionally left alone — it keeps
+    // tracking lutHood.get(effectiveDistance) live in driveToVelocity()
+    // exactly as before, since refreshDistance() still runs every loop
+    // regardless of this lock.
+    public boolean lockedShot = false;
+    public double lockedVelocity = 0.0;
+
+    /** Call once (e.g. on entering a collection segment) with the distance
+     *  expected at the NEXT shot location. */
+    public void lockToDistance(double predictedDistance) {
+        lockedVelocity = lutVelocity.get(predictedDistance);
+        lockedShot = true;
+    }
+
+    /** Call on entering the next shoot-window segment to fall back to the
+     *  normal live idle/effectiveDistance-based velocity solve. */
+    public void clearLock() {
+        lockedShot = false;
+    }
+
     public Shooter(HardwareMap hMap) {
         shooter1 = new Motor(hMap, "shooterMotor", Motor.GoBILDA.BARE);
         shooter2 = new Motor(hMap, "shooterMotor2", Motor.GoBILDA.BARE);
@@ -124,6 +179,7 @@ public class Shooter extends SubsystemBase {
         lutVelocity.add(118, 2020);
         lutVelocity.add(122.5, 2080);
         lutVelocity.add(200, 2160);
+        lutVelocity.add(300, 2400);
 
         lutHood.add(-30, 1);
         lutHood.add(0, 1);
@@ -137,16 +193,26 @@ public class Shooter extends SubsystemBase {
         lutHood.add(118, 0.5);
         lutHood.add(122.5, 0.47);
         lutHood.add(200, 0.47);
+        lutHood.add(300, 0.45);
 
         // TODO(bench-tune): replace with measured flight times per distance.
         // Close zone (< ~100") and far zone (>= ~100") both represented.
-        lutTimeOfFlight.add(-30, 0.7);
-        lutTimeOfFlight.add(0, 0.7);
-        lutTimeOfFlight.add(30, 0.8);
-        lutTimeOfFlight.add(61, 1);
-        lutTimeOfFlight.add(105.2, 1.3);
-        lutTimeOfFlight.add(122.5, 1.7);
-        lutTimeOfFlight.add(200, 2);
+//        lutTimeOfFlight.add(-30, 0.7);
+//        lutTimeOfFlight.add(0, 0.7);
+//        lutTimeOfFlight.add(30, 0.8);
+//        lutTimeOfFlight.add(61, 1);
+//        lutTimeOfFlight.add(105.2, 1.5);
+//        lutTimeOfFlight.add(122.5, 1.7);
+//        lutTimeOfFlight.add(200, 2);
+//        lutTimeOfFlight.add(300, 3);
+        lutTimeOfFlight.add(-30, 0.4);
+        lutTimeOfFlight.add(0, 0.4);
+        lutTimeOfFlight.add(30, 0.5);
+        lutTimeOfFlight.add(61, 0.6);
+        lutTimeOfFlight.add(105.2, 1);
+        lutTimeOfFlight.add(122.5, 1.2);
+        lutTimeOfFlight.add(200, 1.5);
+        lutTimeOfFlight.add(300, 1.8);
 
 
         lutVelocity.createLUT();
@@ -163,7 +229,9 @@ public class Shooter extends SubsystemBase {
         refreshDistance();
 
         double targetVelocity;
-        if (idle) {
+        if (lockedShot) {
+            targetVelocity = lockedVelocity + add;
+        } else if (idle) {
             if (!shooterBlah) {
                 targetVelocity = (distance < 100) ? (lutVelocity.get(effectiveDistance) + add) : 1500;
             } else {
@@ -231,11 +299,30 @@ public class Shooter extends SubsystemBase {
         }
     }
 
+    /**
+     * Samples the slope of lutVelocity at the current effectiveDistance, in the
+     * direction effectiveDistance is currently moving, to estimate d(targetVelocity)/dt.
+     * effectiveDistance's own rate of change is approximated as -radialVelocity
+     * (distance shrinks as radialVelocity/closing-speed increases) — this ignores
+     * the smaller effect of timeOfFlight itself changing with distance, consistent
+     * with the "single pass, no need to iterate to convergence" approximation
+     * already used in updateRadialCompensation().
+     */
+    private double sampleWheelAccelFeedforward() {
+        double effectiveDistanceRate = -radialVelocity;
+        double shifted = Math.max(0.0, effectiveDistance + effectiveDistanceRate * accelSamplingDt);
+        double targetVelocityRate = (lutVelocity.get(shifted) - lutVelocity.get(effectiveDistance)) / accelSamplingDt;
+        return wheelAccelKA * targetVelocityRate;
+    }
+
     private void driveToVelocity(double targetVelocity) {
         controller.setSetPoint(targetVelocity);
         hood.set(lutHood.get(effectiveDistance));
         double currentVelocity = getVelocity();
         power = controller.calculate(currentVelocity);
+        if (enableWheelAccelFeedforward) {
+            power += sampleWheelAccelFeedforward();
+        }
         setPower(power);
     }
 

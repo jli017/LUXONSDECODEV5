@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.utils;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandScheduler;
@@ -169,10 +170,11 @@ public class Lebruxon {
                                     intake.setPower(1, 1);
                                     intake.setMinPower(1);
                                 }),
-                                new WaitCommand(1500),
+                                new WaitCommand(400),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);
+                                    shooter.closeStopper();
                                 })
                         ),
                         new InstantCommand(() -> shooter.autoPower(false, false)),
@@ -190,7 +192,7 @@ public class Lebruxon {
                                 new InstantCommand(() -> {
                                     if(Lebruxon.shooter.distance>100) {
                                         intake.setPower(0.7, 0.7);
-                                        intake.setMinPower(0.7);
+                                        intake.setMinPower(0.8);
                                     } else {
                                         intake.setPower(0.95, 0.95);
                                         intake.setMinPower(0.95);
@@ -200,19 +202,41 @@ public class Lebruxon {
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
                                 new WaitCommand(150),
                                 new InstantCommand(() -> shooter.setCurrentHoodPercent(1.1)),
-                                new WaitCommand(200),
+                                new WaitCommand(190),
+                                new InstantCommand(() -> {
+                                    if(Lebruxon.shooter.distance > 100) {
+                                        new WaitCommand(300);
+                                    }
+                        }),
                                 new InstantCommand(() -> {
                                     intake.setPower(0, 0);
                                     intake.setMinPower(0);
                                     shooter.closeStopper();
-                                }),
-                                reset()
+                                })
                         ),
                         new InstantCommand(() -> {
-                            shooter.autoPower(false, false);
                             shooter.closeStopper();
                         }),                        () -> Lebruxon.shooter.controller.atSetPoint()
                 )
+        );
+    }
+
+    public static Command shootNow() {
+        AtomicBoolean usedTimeout = new AtomicBoolean(true);
+        return new SequentialCommandGroup(
+                new InstantCommand(() -> shooter.openStopper()),
+                        new SequentialCommandGroup(
+                                new InstantCommand(() -> {
+                                    intake.setPower(1, 1);
+                                    intake.setMinPower(1);
+                                }),
+                                new WaitCommand(400),
+                                new InstantCommand(() -> {
+                                    intake.setPower(0, 0);
+                                    intake.setMinPower(0);
+                                    shooter.closeStopper();
+                                })
+                        )
         );
     }
 }

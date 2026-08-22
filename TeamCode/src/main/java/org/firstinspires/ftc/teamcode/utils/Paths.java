@@ -22,7 +22,7 @@ public class Paths {
     public PathChain scorePPG;
     public PathChain park;
     public Pose startPose;
-    public Pose shootingPose = new Pose(60, 19, Math.toRadians(180));
+    public Pose shootingPose = new Pose(57.5, 19, Math.toRadians(145));
     public Pose intakeGPP1Pose = new Pose(42, 35, Math.toRadians(180));
     public Pose intakeGPP2Pose = new Pose(21.5, 35, intakeGPP1Pose.getHeading());
     public Pose openGatePose = new Pose(14, 75, intakeGPP1Pose.getHeading());
@@ -60,7 +60,7 @@ public class Paths {
     public PathChain swipefirst;
     public PathChain swipelast;
 
-    public Pose shootPose = new Pose(60, 16, Math.toRadians(145));
+    public Pose shootPose = new Pose(57.5, 16, Math.toRadians(145));
     //public Pose shootingPose = new Pose(60, 19, Math.toRadians(180));
 
     public Pose intakegpp1Pose = new Pose(43, 34, Math.toRadians(180));
@@ -101,11 +101,14 @@ public class Paths {
 
 
     // All Close poses — declared without heading shortcuts so mirroring is explicit
-    public Pose CloseshootPose        = new Pose(62, 85, Math.toRadians(170));
+    //public Pose CloseshootPose        = new Pose(62, 85, Math.toRadians(170));
+    public Pose CloseshootPose     = new Pose(50.6, 84, Math.toRadians(180));
     public Pose CloseintakePPGPose    = new Pose(18, 85, Math.toRadians(180));
     public Pose CloseintakePGPPose    = new Pose(17, 55, Math.toRadians(180));
     public Pose CloseIntakePGPControl = new Pose(50, 53);
-    public Pose CloseshootPGPPose     = new Pose(53, 85, Math.toRadians(190));
+    //public Pose CloseshootPGPPose     = new Pose(53, 85, Math.toRadians(190));
+    public Pose CloseshootPGPPose     = new Pose(50.6, 84, Math.toRadians(180));
+
     public Pose CloseintakeGPP1Pose   = new Pose(45, 36, Math.toRadians(180));
     public Pose CloseintakeGPP2Pose   = new Pose(14, 36, Math.toRadians(180));
     public Pose CloseShootGPPPose     = new Pose(53, 100, Math.toRadians(190));
@@ -539,7 +542,7 @@ public class Paths {
                 .addPath(
                         new BezierLine(
                                 new Pose(21.431, 82.482),
-                                new Pose(50.197, 75.399)
+                                new Pose(52.197, 75.399)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
@@ -573,7 +576,6 @@ public class Paths {
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
-                .setReversed()
                 .addPath(
                         new BezierCurve(
                                 new Pose(54.633, 72.752),

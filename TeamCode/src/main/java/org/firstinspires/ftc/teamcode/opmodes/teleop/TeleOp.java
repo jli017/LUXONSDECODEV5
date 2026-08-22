@@ -163,9 +163,9 @@ public class TeleOp extends CommandOpMode {
         // enableAim is false. Right trigger = CW, left trigger = CCW —
         // flip the sign below if that's backwards on the bench.
         if (!Lebruxon.turret.enableAim) {
-            double ccw = jonathan.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
-            double cw  = jonathan.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER);
-            Lebruxon.turret.manualPower = cw - ccw;
+            double cw = jonathan.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
+            double ccw  = jonathan.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER);
+            Lebruxon.turret.manualPower = (cw * 0.5) - (ccw * 0.5);
         } else {
             Lebruxon.turret.manualPower = 0;
         }
