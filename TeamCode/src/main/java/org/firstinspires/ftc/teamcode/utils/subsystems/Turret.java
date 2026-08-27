@@ -38,17 +38,9 @@ public class Turret extends SubsystemBase {
     // PID Tuning
     // =========================
 
-    public static double p = 0.7;
-    public static double d = 0.002;
+    public static double p = 0.6;
+    public static double d = 0.003;
 
-    // Angular-velocity feedforward gain. A pure P(D) loop only ever reacts to
-    // position error, so it structurally lags a moving setpoint (the setpoint
-    // moves every loop while we're aiming during translation / lead compensation).
-    // kV feeds forward the target's own angular velocity as commanded power so
-    // the turret is already trying to match the target's rotation rate instead
-    // of only closing the gap after it appears. Start at 0 on the bench, then
-    // increase in small steps while sweeping the robot laterally in front of the
-    // goal until the turret visibly stops lagging the target without oscillating.
     public static double kV = 0.1;
 
     public static double maxPower = 0.85;
@@ -60,17 +52,11 @@ public class Turret extends SubsystemBase {
     // Hard Limits (Mapped 0 to 2PI Space)
     // ===================================
 
-    // Safe Travel Region: Side A [0°, 240°] and Side B [290°, 360°]
-    // Prohibited Deadzone Region: (240°, 290°)
     private static final double LOWER_DEADZONE = Math.toRadians(245.0);
     private static final double UPPER_DEADZONE = Math.toRadians(290.0);
 
-    // Shift frame origin to deadzone midpoint so the 0/2PI wrap seam sits
-    // inside the deadzone — a region the turret never occupies — eliminating
-    // the jitter that happened when normalizedPos flickered across 0°/360°.
     private static final double FRAME_SHIFT = Math.toRadians(265.0);
 
-    // Pre-shifted deadzone boundaries used for routing checks.
     private static final double SHIFTED_LOWER = wrapToTwoPi(LOWER_DEADZONE - FRAME_SHIFT);
     private static final double SHIFTED_UPPER = wrapToTwoPi(UPPER_DEADZONE - FRAME_SHIFT);
 
@@ -82,43 +68,19 @@ public class Turret extends SubsystemBase {
     // Shoot-on-the-Move
     // =========================
 
-    // Master enable so lead compensation can be killed independently of enableAim
-    // (useful for A/B testing accuracy with/without lead during bring-up).
     public static boolean enableLeadCompensation = true;
-
-    // Scales the raw robotVelocity * timeOfFlight lead offset. Start at 1.0 and
-    // tune down/up on the field once lutTimeOfFlight values are bench-measured.
     public static double leadMultiplier = 1.0;
 
-    // Last computed lead offset (inches), exposed for logging/telemetry.
     public double lastLeadX = 0.0;
     public double lastLeadY = 0.0;
 
     // =========================
-    // Predictive aim lock (used while intaking, before a shoot window)
+    // Predictive aim lock
     // =========================
-    //
-    // enableAim tracks the goal LIVE off the robot's current pose every loop,
-    // which is correct right before/during a shot but is wasted, noisy motion
-    // while just driving around collecting balls. Since auto paths are known
-    // ahead of time, the caller (e.g. the auto OpMode) can instead call
-    // setLockedTarget() once with the pose we expect to be at for the NEXT
-    // shot. That resolves a single fieldTargetAngle up front — no lead
-    // compensation, no re-deriving dx/dy from a constantly-changing distance —
-    // and update() just keeps reprojecting that fixed field angle through the
-    // CURRENT heading every loop (since heading can still change while we
-    // drive/intake). Deliberately alliance-agnostic: it only reads from
-    // Lebruxon.goalShooter/targetClose/targetFar, which are already resolved
-    // per-alliance in Lebruxon.init() — no mirroring math lives here.
+
     public boolean lockedAim = false;
     private double lockedFieldAngle = 0.0;
 
-    /**
-     * Call once (e.g. on entering a collection segment) with the field pose
-     * the robot is expected to be at for the NEXT shot. Picks targetClose vs
-     * targetFar the same way the live-aim path does, based on distance from
-     * that predicted point to the goal.
-     */
     public void setLockedTarget(double predictedX, double predictedY) {
         double distToGoal = Math.hypot(
                 Lebruxon.goalShooter.getX() - predictedX,
@@ -135,8 +97,6 @@ public class Turret extends SubsystemBase {
         lockedAim = true;
     }
 
-    /** Call on entering the next shoot-window segment to fall back to full
-     *  live tracking (with lead compensation) for final approach precision. */
     public void clearLockedTarget() {
         lockedAim = false;
     }
@@ -151,11 +111,7 @@ public class Turret extends SubsystemBase {
     private double currentTargetAngle = homePos;
     private double lastError = 0.0;
 
-    // Latched on deadzone entry. True = came from lower side (<=240°).
     public boolean approachingFromLower = true;
-
-    // Hysteresis: enter latch at LOWER/UPPER_DEADZONE, exit only once the
-    // turret has fully cleared back past LOWER_HOLD or UPPER_HOLD.
     public boolean inDeadzoneLatch = false;
 
     // =========================
@@ -165,29 +121,15 @@ public class Turret extends SubsystemBase {
     private final ElapsedTime feedforwardTimer = new ElapsedTime();
     private double lastTargetAngle = homePos;
 
-    // Last computed target angular velocity (rad/s), exposed for telemetry/tuning.
     public double lastTargetAngularVelocity = 0.0;
 
     // =========================
     // Manual jog / home-reset control
     // =========================
 
-    // Set every loop by TeleOp from Jonathan's triggers: +1 = full CW jog,
-    // -1 = full CCW jog, 0 = no jog. Only has effect while enableAim is false.
     public double manualPower = 0.0;
-
-    // Max servo power used while jogging (kept below maxPower for control feel).
     public static double manualJogPower = 0.5;
 
-    // Two-stage manual home adjust. False (default/"locked"): while
-    // !enableAim, update() tracks homePos as usual. True ("unlocked"): set by
-    // TeleOp on the first dpad-down press; update() instead freezes
-    // currentTargetAngle at wherever the turret physically is, so it doesn't
-    // fight the PD loop pulling back toward the OLD home while the triggers
-    // are jogging it toward a new one. TeleOp clears this (via
-    // setHomeToCurrentPosition()) on the second dpad-down press. TeleOp is
-    // also responsible for refusing to flip enableAim to true while this is
-    // true, so an adjustment can't be silently abandoned mid-way.
     public boolean homeAdjustUnlocked = false;
 
     // =========================
@@ -212,20 +154,16 @@ public class Turret extends SubsystemBase {
         controller.setTolerance(Math.toRadians(toleranceDeg));
         controller.reset();
 
-        // Compute HOLD boundaries FIRST before anything reads them
         LOWER_HOLD = LOWER_DEADZONE - Math.toRadians(deadzoneMarginDeg);
         UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
 
-        // Reconstruct encoder offset using the exact snapshot pair from Storage
         int ticksForSavedAngle = (int) Math.round(Storage.turretAngle * ticksPerRadian);
         encoderOffset = Storage.turretEncoderSnapshot - ticksForSavedAngle;
 
-        // 2. Set the default target angle to wherever Auto left off, NOT homePos
         currentTargetAngle = Storage.turretAngle;
         lastTargetAngle = Storage.turretAngle;
         feedforwardTimer.reset();
 
-        // Now these reads are valid
         approachingFromLower = Storage.turretAngle <= LOWER_DEADZONE;
         inDeadzoneLatch = Storage.turretAngle > LOWER_DEADZONE
                 && Storage.turretAngle < UPPER_DEADZONE;
@@ -236,7 +174,6 @@ public class Turret extends SubsystemBase {
     // =========================
 
     public void saveToStorage() {
-        // Save raw angle WITHOUT trim so the snapshot pair is self-consistent
         int correctedTicks = encoderMotor.getCurrentPosition() - encoderOffset;
         double rawAngleNoTrim = wrapToTwoPi(correctedTicks / ticksPerRadian);
 
@@ -247,12 +184,6 @@ public class Turret extends SubsystemBase {
 
     // =========================
     // Manual home reset
-    //
-    // Call this when Jonathan has jogged the turret (via manualPower, below)
-    // to the correct physical home and presses dpad-down a second time (see
-    // homeAdjustUnlocked above). It re-zeros the encoder offset at the
-    // CURRENT physical position, so getNormalizedAngle() reads 0 immediately
-    // afterward, and makes that the new homePos.
     // =========================
 
     public void setHomeToCurrentPosition() {
@@ -277,24 +208,19 @@ public class Turret extends SubsystemBase {
         UPPER_HOLD = UPPER_DEADZONE + Math.toRadians(deadzoneMarginDeg);
 
         double normalizedPos = getNormalizedAngle();
-        Storage.turretAngle = normalizedPos;
+
+        int rawTicksNow = encoderMotor.getCurrentPosition() - encoderOffset;
+        Storage.turretAngle = wrapToTwoPi(rawTicksNow / ticksPerRadian);
+        Storage.turretEncoderSnapshot = encoderMotor.getCurrentPosition();
 
         // ====================================================================
-        // 0. Manual jog override (relocating a wrong home position)
-        //
-        // Only active while aim-assist is OFF and Jonathan is holding a trigger.
-        // Deliberately open-loop and bypasses the deadzone guard entirely: the
-        // whole point of jogging is to physically find a new zero when the
-        // current encoderOffset (and therefore the deadzone mapping) may be
-        // wrong, so the deadzone math can't be trusted while doing it.
+        // 0. Manual jog override
         // ====================================================================
         if (!enableAim && Math.abs(manualPower) > 0.02) {
             double clampedManual = clamp(manualPower, -1.0, 1.0) * manualJogPower;
             leftServo.setPower(-clampedManual);
             rightServo.setPower(-clampedManual);
 
-            // Keep PD/feedforward state synced to wherever we physically are so
-            // releasing the trigger doesn't cause a snap back toward a stale target.
             currentTargetAngle = normalizedPos;
             lastTargetAngle = normalizedPos;
             lastError = 0.0;
@@ -305,9 +231,6 @@ public class Turret extends SubsystemBase {
 
         // ====================================================================
         // 1. Hysteresis deadzone detection
-        //
-        // Enter latch the moment we cross into (240°, 290°).
-        // Exit latch only once fully clear of LOWER_HOLD or UPPER_HOLD.
         // ====================================================================
         if (!inDeadzoneLatch) {
             if (normalizedPos > LOWER_DEADZONE && normalizedPos < UPPER_DEADZONE) {
@@ -331,9 +254,6 @@ public class Turret extends SubsystemBase {
             currentTargetAngle = approachingFromLower ? LOWER_HOLD : UPPER_HOLD;
 
         } else if (lockedAim) {
-            // Predictive lock: field angle was already resolved once by
-            // setLockedTarget(); only reproject it through the CURRENT
-            // heading, since heading can still change while intaking.
             double robotHeading = wrapToTwoPi(Lebruxon.drivetrain.follower.getHeading());
             double normalizedTarget = wrapToTwoPi(lockedFieldAngle - robotHeading);
 
@@ -357,25 +277,12 @@ public class Turret extends SubsystemBase {
                 dy = Lebruxon.targetClose.getY() - robotPose.getY();
             }
 
-            // ================================================================
-            // 2a. Shoot-on-the-move lead compensation
-            //
-            // A ball launched while the robot is translating inherits the
-            // robot's field-relative velocity. To land on the real target we
-            // aim at a "virtual target" shifted opposite the direction of
-            // travel by (robotVelocity * timeOfFlight) — i.e. we aim short of
-            // where the robot's motion would otherwise carry the shot, so the
-            // inherited velocity component cancels out over the flight time.
-            //
-            // timeOfFlight currently comes from Shooter's placeholder LUT
-            // (Shooter.lutTimeOfFlight) — bench-measure and replace those
-            // points before trusting this for real matches.
-            //
-            // NOTE: verify getVelocity()'s return type/units against your
-            // Pedro Pathing version — this assumes a field-relative Vector
-            // with getX()/getY() in the same units as robotPose (inches/sec).
-            // ================================================================
-            if (enableLeadCompensation) {
+            // FIX: only apply shoot-on-the-move lead compensation for close
+            // shots. Far shots (distance > 100) now aim straight at
+            // targetFar with no lead offset — keeps far shooting on point
+            // instead of getting shifted by a lead correction that was
+            // apparently not reliable at that range.
+            if (enableLeadCompensation && Lebruxon.shooter.distance <= 100) {
                 double timeOfFlight = Lebruxon.shooter.getTimeOfFlight(Lebruxon.shooter.distance);
                 Vector robotVel = Lebruxon.drivetrain.follower.getVelocity();
 
@@ -405,28 +312,11 @@ public class Turret extends SubsystemBase {
             }
 
         } else {
-            // !enableAim, not locked, not in deadzone latch.
-            // Unlocked: hold current physical position (no pull toward the
-            // OLD home while jogging toward a new one).
-            // Locked (default): track homePos as before.
             currentTargetAngle = homeAdjustUnlocked ? normalizedPos : homePos;
         }
 
         // ====================================================================
         // 2b. Angular-velocity feedforward
-        //
-        // Knowing WHERE to aim (2. above) is different from actually getting
-        // there in time — while the robot rotates/translates or lead compensation
-        // shifts the virtual target, currentTargetAngle itself is moving every
-        // loop, and a P(D) loop only ever reacts after an error appears. Estimate
-        // the target's own angular velocity (rad/s) and feed it forward directly
-        // as commanded power so the turret is already matching the setpoint's
-        // rotation rate instead of chasing it from behind.
-        //
-        // Guarded against the first loop after init/mode-switch and against
-        // stalls (dt too large) so a stale dt doesn't produce a bogus velocity
-        // spike; also gets naturally zeroed while inDeadzoneLatch holds the
-        // target still, and reset whenever manual jog runs (see block 0 above).
         // ====================================================================
         double dt = feedforwardTimer.seconds();
         feedforwardTimer.reset();
@@ -441,13 +331,6 @@ public class Turret extends SubsystemBase {
 
         // ====================================================================
         // 3. Compute error in the shifted frame
-        //
-        // Shift both angles by FRAME_SHIFT (265°) so the wrap seam sits inside
-        // the deadzone. This eliminates the 0/2PI jitter.
-        //
-        // Then, if the shortest-path error in this frame would still route
-        // through the deadzone (SHIFTED_LOWER to SHIFTED_UPPER), force it the
-        // other way.
         // ====================================================================
         double shiftedPos    = wrapToTwoPi(normalizedPos      - FRAME_SHIFT);
         double shiftedTarget = wrapToTwoPi(currentTargetAngle - FRAME_SHIFT);
@@ -457,17 +340,16 @@ public class Turret extends SubsystemBase {
         if (error >  Math.PI) error -= 2.0 * Math.PI;
         if (error < -Math.PI) error += 2.0 * Math.PI;
 
-        // Force long-way routing adjustments to avoid deadzone crossing
         if (!inDeadzoneLatch) {
             boolean onLowerShiftedSide = shiftedPos >= SHIFTED_UPPER && shiftedPos <= Math.PI * 2;
             boolean onUpperShiftedSide = shiftedPos >= 0 && shiftedPos <= SHIFTED_LOWER;
 
             if (onUpperShiftedSide && error > 0 && (shiftedPos + error) > SHIFTED_LOWER) {
                 error -= 2.0 * Math.PI;
-                lastError -= 2.0 * Math.PI; // Keep derivative stable!
+                lastError -= 2.0 * Math.PI;
             } else if (onLowerShiftedSide && error < 0 && (shiftedPos + error) < SHIFTED_UPPER) {
                 error += 2.0 * Math.PI;
-                lastError += 2.0 * Math.PI; // Keep derivative stable!
+                lastError += 2.0 * Math.PI;
             }
         }
 
@@ -529,9 +411,6 @@ public class Turret extends SubsystemBase {
         return wrapped;
     }
 
-    // Shortest signed angular distance a -> b, wrapped into (-PI, PI].
-    // Used so the feedforward velocity estimate doesn't spike when the raw
-    // difference crosses the 0/2PI seam.
     private static double shortestAngleDiff(double a, double b) {
         double diff = (a - b) % (2.0 * Math.PI);
         if (diff > Math.PI) diff -= 2.0 * Math.PI;

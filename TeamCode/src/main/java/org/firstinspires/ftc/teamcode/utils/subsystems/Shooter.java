@@ -197,22 +197,22 @@ public class Shooter extends SubsystemBase {
 
         // TODO(bench-tune): replace with measured flight times per distance.
         // Close zone (< ~100") and far zone (>= ~100") both represented.
-//        lutTimeOfFlight.add(-30, 0.7);
-//        lutTimeOfFlight.add(0, 0.7);
-//        lutTimeOfFlight.add(30, 0.8);
-//        lutTimeOfFlight.add(61, 1);
-//        lutTimeOfFlight.add(105.2, 1.5);
-//        lutTimeOfFlight.add(122.5, 1.7);
-//        lutTimeOfFlight.add(200, 2);
-//        lutTimeOfFlight.add(300, 3);
-        lutTimeOfFlight.add(-30, 0.4);
-        lutTimeOfFlight.add(0, 0.4);
-        lutTimeOfFlight.add(30, 0.5);
-        lutTimeOfFlight.add(61, 0.6);
-        lutTimeOfFlight.add(105.2, 1);
-        lutTimeOfFlight.add(122.5, 1.2);
-        lutTimeOfFlight.add(200, 1.5);
-        lutTimeOfFlight.add(300, 1.8);
+        lutTimeOfFlight.add(-30, 0.7);
+        lutTimeOfFlight.add(0, 0.7);
+        lutTimeOfFlight.add(30, 0.8);
+        lutTimeOfFlight.add(61, 1);
+        lutTimeOfFlight.add(105.2, 1.5);
+        lutTimeOfFlight.add(122.5, 1.7);
+        lutTimeOfFlight.add(200, 2);
+        lutTimeOfFlight.add(300, 3);
+//        lutTimeOfFlight.add(-30, 0.4);
+//        lutTimeOfFlight.add(0, 0.4);
+//        lutTimeOfFlight.add(30, 0.5);
+//        lutTimeOfFlight.add(61, 0.6);
+//        lutTimeOfFlight.add(105.2, 1);
+//        lutTimeOfFlight.add(122.5, 1.2);
+//        lutTimeOfFlight.add(200, 1.5);
+//        lutTimeOfFlight.add(300, 1.8);
 
 
         lutVelocity.createLUT();

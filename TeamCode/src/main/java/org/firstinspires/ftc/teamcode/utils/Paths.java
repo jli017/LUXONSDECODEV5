@@ -115,10 +115,10 @@ public class Paths {
     public Pose CloseintakeGPP1Pose   = new Pose(45, 36, Math.toRadians(180));
     public Pose CloseintakeGPP2Pose   = new Pose(14, 36, Math.toRadians(180));
     public Pose CloseShootGPPPose     = new Pose(53, 100, Math.toRadians(190));
-    public Pose CloseIntakeG1Pose     = new Pose(16, 59, Math.toRadians(170));
+    public Pose CloseIntakeG1Pose     = new Pose(17, 59, Math.toRadians(170));
     public Pose CloseIntakeG3Pose     = new Pose(17, 63, Math.toRadians(170));
 //    public Pose CloseIntakeG1Pose2    = new Pose(11, 58.5, Math.toRadians(138.5));
-    public Pose CloseIntakeG1Pose2    = new Pose(11, 58.5, Math.toRadians(143));
+    public Pose CloseIntakeG1Pose2    = new Pose(11, 59.5, Math.toRadians(143));
 
     public Pose Close21Extra          = new Pose(23,35, Math.toRadians(180));
     public Pose Close21Control        = new Pose(66.5,28);

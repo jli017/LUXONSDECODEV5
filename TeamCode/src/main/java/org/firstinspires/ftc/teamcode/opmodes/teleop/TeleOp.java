@@ -22,8 +22,6 @@ public class TeleOp extends CommandOpMode {
 
     public static double increment = 0.0175;
 
-    // Promoted from locals to fields so run() can poll Jonathan's triggers
-    // every loop for manual turret jogging (see run() below).
     private GamepadEx samai;
     private GamepadEx jonathan;
 
@@ -31,8 +29,6 @@ public class TeleOp extends CommandOpMode {
     public void initialize() {
         Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
 
-        // FIX: enableAim was never set to true after the broken
-        // CommandScheduler.schedule(turret.enableAim = true) line was removed.
         Lebruxon.turret.enableAim = false;
 
         Lebruxon.update();
@@ -92,12 +88,9 @@ public class TeleOp extends CommandOpMode {
                     }
                 }));
 
-        // FIX: refuse to enable aim while a manual home adjustment is still
-        // unlocked (i.e. between the "unlock" and "lock" dpad-down presses on
-        // jonathan's controller). Enabling aim mid-adjustment would leave
-        // homePos pointing at whatever it was before the jog started, silently
-        // discarding the in-progress adjustment instead of forcing it to be
-        // finished with a second dpad-down press first.
+        // Blocks Samai from re-enabling aim while Jonathan's manual home
+        // adjustment is still unlocked, so an in-progress adjustment can't
+        // be silently abandoned by aim snapping back on mid-jog.
         samai.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new InstantCommand(() -> {
                     if (!Lebruxon.turret.enableAim && Lebruxon.turret.homeAdjustUnlocked) {
@@ -106,30 +99,25 @@ public class TeleOp extends CommandOpMode {
                     Lebruxon.turret.enableAim = !Lebruxon.turret.enableAim;
                 }));
 
-        // FIX: Preserve enableAim across re-init so a DPAD_UP re-init doesn't silently
-        // reset turret state.
         jonathan.getGamepadButton(GamepadKeys.Button.DPAD_UP).whenPressed(new InstantCommand(() -> {
             boolean savedAim = Lebruxon.turret.enableAim;
             double savedHome = Turret.homePos;
             Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
             Lebruxon.turret.enableAim = savedAim;
             Turret.homePos = savedHome;
-            // A re-init mid-adjustment shouldn't leave the turret in limbo —
-            // force whoever re-enters manual mode to unlock again explicitly.
             Lebruxon.turret.homeAdjustUnlocked = false;
         }));
 
-        // Manual home adjust, two-stage:
-        //   1st press (while enableAim is off, locked): unlock — stop tracking
-        //     homePos so jogging the triggers below isn't fighting the PD loop
-        //     between trigger inputs.
-        //   2nd press (while unlocked): lock — zero the encoder offset at the
-        //     current physical position and make that the new homePos.
-        // Only meaningful while enableAim is off; ignored otherwise.
+        // FIX: Jonathan's dpad-down now owns both ends of the manual reset
+        // sequence instead of requiring aim to already be off.
+        //   1st press: force aim off and unlock — triggers below can now
+        //     freely jog the turret without the PD loop fighting them.
+        //   2nd press: zero the encoder at wherever it's been jogged to,
+        //     make that the new homePos, and relock — handing control back
+        //     to Samai's DPAD_DOWN, which was blocked above while unlocked.
         jonathan.getGamepadButton(GamepadKeys.Button.DPAD_DOWN).whenPressed(new InstantCommand(() -> {
-            if (Lebruxon.turret.enableAim) return;
-
             if (!Lebruxon.turret.homeAdjustUnlocked) {
+                Lebruxon.turret.enableAim = false;
                 Lebruxon.turret.homeAdjustUnlocked = true;
             } else {
                 Lebruxon.turret.setHomeToCurrentPosition();
@@ -179,9 +167,6 @@ public class TeleOp extends CommandOpMode {
 
         Drivetrain.lock = gamepad1.cross;
 
-        // Manual turret jog: only has effect in Turret.update() while
-        // enableAim is false. Right trigger = CW, left trigger = CCW —
-        // flip the sign below if that's backwards on the bench.
         if (!Lebruxon.turret.enableAim) {
             double cw = jonathan.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
             double ccw  = jonathan.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER);
