@@ -92,8 +92,17 @@ public class TeleOp extends CommandOpMode {
                     }
                 }));
 
+        // FIX: refuse to enable aim while a manual home adjustment is still
+        // unlocked (i.e. between the "unlock" and "lock" dpad-down presses on
+        // jonathan's controller). Enabling aim mid-adjustment would leave
+        // homePos pointing at whatever it was before the jog started, silently
+        // discarding the in-progress adjustment instead of forcing it to be
+        // finished with a second dpad-down press first.
         samai.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new InstantCommand(() -> {
+                    if (!Lebruxon.turret.enableAim && Lebruxon.turret.homeAdjustUnlocked) {
+                        return;
+                    }
                     Lebruxon.turret.enableAim = !Lebruxon.turret.enableAim;
                 }));
 
@@ -105,15 +114,26 @@ public class TeleOp extends CommandOpMode {
             Lebruxon.init(hardwareMap, Lebruxon.MatchState.TELEOP, Storage.alliance);
             Lebruxon.turret.enableAim = savedAim;
             Turret.homePos = savedHome;
+            // A re-init mid-adjustment shouldn't leave the turret in limbo —
+            // force whoever re-enters manual mode to unlock again explicitly.
+            Lebruxon.turret.homeAdjustUnlocked = false;
         }));
 
-        // Manual turret home reset: only meant to be used while enableAim is
-        // OFF and Jonathan has jogged the turret (via triggers, see run()) to
-        // the correct physical home position. Zeros the encoder offset at the
-        // current position and makes that the new homePos.
+        // Manual home adjust, two-stage:
+        //   1st press (while enableAim is off, locked): unlock — stop tracking
+        //     homePos so jogging the triggers below isn't fighting the PD loop
+        //     between trigger inputs.
+        //   2nd press (while unlocked): lock — zero the encoder offset at the
+        //     current physical position and make that the new homePos.
+        // Only meaningful while enableAim is off; ignored otherwise.
         jonathan.getGamepadButton(GamepadKeys.Button.DPAD_DOWN).whenPressed(new InstantCommand(() -> {
-            if (!Lebruxon.turret.enableAim) {
+            if (Lebruxon.turret.enableAim) return;
+
+            if (!Lebruxon.turret.homeAdjustUnlocked) {
+                Lebruxon.turret.homeAdjustUnlocked = true;
+            } else {
                 Lebruxon.turret.setHomeToCurrentPosition();
+                Lebruxon.turret.homeAdjustUnlocked = false;
             }
         }));
 
@@ -171,6 +191,7 @@ public class TeleOp extends CommandOpMode {
         }
 
         telemetry.addData("turret enableAim ",     Lebruxon.turret.enableAim);
+        telemetry.addData("turret homeAdjustUnlocked ", Lebruxon.turret.homeAdjustUnlocked);
         telemetry.addData("turret manual power ",  Lebruxon.turret.manualPower);
         telemetry.addData("turret target vel (deg/s) ", Math.toDegrees(Lebruxon.turret.lastTargetAngularVelocity));
         telemetry.addData("robot x ",              Lebruxon.drivetrain.follower.getPose().getX());

@@ -5,6 +5,7 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 
 public class Paths {
@@ -93,6 +94,8 @@ public class Paths {
     public PathChain CloseIntakeTurn;
     public PathChain CloseIntakeTurn3;
     public PathChain Closepark;
+    public PathChain Extra21;
+    public PathChain Shootextra;
     public PathChain turn1;
     public PathChain turn2;
 
@@ -114,7 +117,12 @@ public class Paths {
     public Pose CloseShootGPPPose     = new Pose(53, 100, Math.toRadians(190));
     public Pose CloseIntakeG1Pose     = new Pose(16, 59, Math.toRadians(170));
     public Pose CloseIntakeG3Pose     = new Pose(17, 63, Math.toRadians(170));
-    public Pose CloseIntakeG1Pose2    = new Pose(11, 58.5, Math.toRadians(138.5));
+//    public Pose CloseIntakeG1Pose2    = new Pose(11, 58.5, Math.toRadians(138.5));
+    public Pose CloseIntakeG1Pose2    = new Pose(11, 58.5, Math.toRadians(143));
+
+    public Pose Close21Extra          = new Pose(23,35, Math.toRadians(180));
+    public Pose Close21Control        = new Pose(66.5,28);
+
     public Pose CloseIntakeG3Pose2    = new Pose(11.5, 58, Math.toRadians(146));
     public Pose CloseShootG1Pose      = new Pose(53, 85, Math.toRadians(190));
     public Pose CloseShootG1Control   = new Pose(49, 63);
@@ -168,6 +176,8 @@ public class Paths {
             CloseShootG1Pose      = CloseShootG1Pose.mirror();
             CloseShootG1Control   = CloseShootG1Control.mirror();
             CloseparkPose         = CloseparkPose.mirror();
+            Close21Extra          = Close21Extra.mirror();
+            Close21Control        = Close21Control.mirror();
         }
 
         // ── Far zone 12-ball ────────────────────────────────────────────────
@@ -407,11 +417,11 @@ public class Paths {
                 .setBrakingStrength(0.42)
                 .build();
 
-        ClosescoreG3 = follower.pathBuilder()
-                .addPath(new BezierCurve(CloseIntakeG3Pose2, CloseShootG1Control, CloseshootPose))
-                .setLinearHeadingInterpolation(CloseIntakeG3Pose2.getHeading(), CloseshootPose.getHeading())
-                .setBrakingStrength(0.42)
-                .build();
+//        ClosescoreG3 = follower.pathBuilder()
+//                .addPath(new BezierCurve(CloseIntakeG3Pose2, CloseShootG1Control, CloseshootPose))
+//                .setLinearHeadingInterpolation(CloseIntakeG3Pose2.getHeading(), CloseshootPose.getHeading())
+//                .setBrakingStrength(0.42)
+//                .build();
 
         CloseintakeGPP1 = follower.pathBuilder()
                 .addPath(new BezierLine(CloseshootPGPPose, CloseintakeGPP1Pose))
@@ -428,6 +438,18 @@ public class Paths {
         ClosescoreGPP = follower.pathBuilder()
                 .addPath(new BezierLine(CloseintakeGPP2Pose, CloseShootGPPPose))
                 .setLinearHeadingInterpolation(CloseintakeGPP2Pose.getHeading(), CloseShootGPPPose.getHeading())
+                .setBrakingStrength(0.42)
+                .build();
+
+        Extra21 = follower.pathBuilder()
+                .addPath(new BezierCurve(CloseshootPGPPose, Close21Control, Close21Extra))
+                .setLinearHeadingInterpolation(CloseshootPGPPose.getHeading(), Close21Extra.getHeading())
+                .setBrakingStrength(0.42)
+                .build();
+
+        Shootextra = follower.pathBuilder()
+                .addPath(new BezierLine(Close21Extra, CloseshootPGPPose))
+                .setLinearHeadingInterpolation(Close21Extra.getHeading(), CloseshootPGPPose.getHeading())
                 .setBrakingStrength(0.42)
                 .build();
 

@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.auto;
 
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -12,78 +13,96 @@ import org.firstinspires.ftc.teamcode.utils.Paths;
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 
 @Autonomous(preselectTeleOp="TeleOp")
-public class BlueOPT12 extends CommandOpMode {
+public class Red15 extends CommandOpMode {
 
     Paths paths;
 
     @Override
     public void initialize() {
-        Lebruxon.init(hardwareMap, Lebruxon.MatchState.AUTO, Lebruxon.Alliance.BLUECLOSE);
-        paths = new Paths(Lebruxon.drivetrain.follower, Lebruxon.Alliance.BLUECLOSE);
-        Lebruxon.drivetrain.follower.setMaxPower(0.8);
+        Lebruxon.init(hardwareMap, Lebruxon.MatchState.AUTO, Lebruxon.Alliance.REDSQ);
+        paths = new Paths(Lebruxon.drivetrain.follower, Lebruxon.Alliance.REDSQ);
+        Lebruxon.drivetrain.follower.setMaxPower(1);
+
 
         Lebruxon.turret.enableAim = true;
+        Lebruxon.shooter.idle = true;
 
         schedule(new SequentialCommandGroup(
 
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosestartToScore),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
-
-
-                new InstantCommand(() -> {
-                    Lebruxon.drivetrain.follower.setMaxPower(0.85);
-                    Lebruxon.intake.setPower(1,1);
-                }),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakePPG),
-                new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
-
-
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePPG),
-                Lebruxon.prime(),
-                new WaitCommand(500),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
-                Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
-
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
-                    Lebruxon.intake.setPower(1,1);
+                    Lebruxon.intake.setPower(1, 1);
                 }),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakePGP1),
-                new WaitCommand(100),
-                new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
+                new WaitCommand(50),
+                new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn2),
 
 
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
 
+                new InstantCommand(() -> {
+                    Lebruxon.drivetrain.follower.setMaxPower(1);
+                    Lebruxon.intake.setPower(1, 1);
+                }),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
+                new WaitCommand(50),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
+                new WaitCommand(800),
+
+                new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
+                new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
+                Lebruxon.prime(),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
+                Lebruxon.shootWithIntake(),
+                Lebruxon.reset(),
+
+                new InstantCommand(() -> {
+                    Lebruxon.drivetrain.follower.setMaxPower(1);
+                    Lebruxon.intake.setPower(1, 1);
+                }),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
+                new WaitCommand(50),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
+                new WaitCommand(800),
+                // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
+                new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
+                new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
+                Lebruxon.prime(),
+                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
+                Lebruxon.shootWithIntake(),
+                Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
                     Lebruxon.intake.setPower(1,1);
                 }),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakeGPP1),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseintakeGPP2),
-                new WaitCommand(400),
-                new InstantCommand(() -> Lebruxon.intake.setPower(0,0)),
-
-
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closeintakelast),
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreGPP),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closescorefinal),
+                new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 Lebruxon.prime(),
                 new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
+                new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
                 Lebruxon.reset(),
-
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -91,8 +110,11 @@ public class BlueOPT12 extends CommandOpMode {
                     Lebruxon.intake.setMinPower(0);
                 }),
                 new InstantCommand(() -> Lebruxon.shooter.autoPower(false,false)),
-                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closepark),
                 new InstantCommand(() -> Lebruxon.turret.enableAim = false)
+
+        // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closepark)
+
+
 
         ));
     }

@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.utils.Paths;
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 
 @Autonomous(preselectTeleOp="TeleOp")
-public class BlueOPT15 extends CommandOpMode {
+public class Blue21ALT extends CommandOpMode {
 
     Paths paths;
 
@@ -30,11 +30,9 @@ public class BlueOPT15 extends CommandOpMode {
         schedule(new SequentialCommandGroup(
 
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosestartToScore),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -48,11 +46,9 @@ public class BlueOPT15 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescorePGP),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -61,16 +57,14 @@ public class BlueOPT15 extends CommandOpMode {
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
                 new WaitCommand(50),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                new WaitCommand(800),
+                new WaitCommand(600),
 
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -79,16 +73,40 @@ public class BlueOPT15 extends CommandOpMode {
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
                 new WaitCommand(50),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
-                new WaitCommand(800),
-                // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.turn1),
+                new WaitCommand(600),
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
+
+                new InstantCommand(() -> {
+                    Lebruxon.drivetrain.follower.setMaxPower(1);
+                    Lebruxon.intake.setPower(1, 1);
+                }),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
+                new WaitCommand(50),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
+                new WaitCommand(600),
+                new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
+                new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
+                new WaitCommand(50),
+                Lebruxon.shootWithIntake(),
+                //Lebruxon.reset(),
+
+                new InstantCommand(() -> {
+                    Lebruxon.drivetrain.follower.setMaxPower(1);
+                    Lebruxon.intake.setPower(1,1);
+                }),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Extra21),
+                new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
+                new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Shootextra),
+                new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
+                new WaitCommand(50),
+                Lebruxon.shootWithIntake(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -98,11 +116,9 @@ public class BlueOPT15 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closescorefinal),
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
-                Lebruxon.prime(),
-                new WaitUntilCommand(() -> Lebruxon.shooter.controller.atSetPoint()),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -112,7 +128,7 @@ public class BlueOPT15 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.shooter.autoPower(false,false)),
                 new InstantCommand(() -> Lebruxon.shooter.idle = false),
                 new InstantCommand(() -> Lebruxon.turret.enableAim = false)
-                    // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closepark)
+                // new FollowPathCommand(Lebruxon.drivetrain.follower, paths.Closepark)
 
 
 

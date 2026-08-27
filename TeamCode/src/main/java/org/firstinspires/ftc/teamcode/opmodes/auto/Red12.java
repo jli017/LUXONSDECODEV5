@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.utils.Paths;
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 
 @Autonomous(preselectTeleOp="TeleOp")
-public class RedOPT12 extends CommandOpMode {
+public class Red12 extends CommandOpMode {
 
     Paths paths;
 

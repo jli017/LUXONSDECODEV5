@@ -37,7 +37,7 @@ import java.util.Set;
  *   uses for full-speed collection.
  */
 @Autonomous(preselectTeleOp = "TeleOp")
-public class BlueOPT21 extends CommandOpMode {
+public class Blue21SOTM extends CommandOpMode {
 
     // Indices (0-based, matching addPath() call order in Paths.BiggerBoiBlue)
     // of segments where the robot is heading back toward the goal and should

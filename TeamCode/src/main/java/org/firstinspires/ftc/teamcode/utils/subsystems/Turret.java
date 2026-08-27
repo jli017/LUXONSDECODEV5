@@ -179,6 +179,17 @@ public class Turret extends SubsystemBase {
     // Max servo power used while jogging (kept below maxPower for control feel).
     public static double manualJogPower = 0.5;
 
+    // Two-stage manual home adjust. False (default/"locked"): while
+    // !enableAim, update() tracks homePos as usual. True ("unlocked"): set by
+    // TeleOp on the first dpad-down press; update() instead freezes
+    // currentTargetAngle at wherever the turret physically is, so it doesn't
+    // fight the PD loop pulling back toward the OLD home while the triggers
+    // are jogging it toward a new one. TeleOp clears this (via
+    // setHomeToCurrentPosition()) on the second dpad-down press. TeleOp is
+    // also responsible for refusing to flip enableAim to true while this is
+    // true, so an adjustment can't be silently abandoned mid-way.
+    public boolean homeAdjustUnlocked = false;
+
     // =========================
     // Encoder Offset
     // =========================
@@ -238,9 +249,10 @@ public class Turret extends SubsystemBase {
     // Manual home reset
     //
     // Call this when Jonathan has jogged the turret (via manualPower, below)
-    // to the correct physical home and presses dpad-down. It re-zeros the
-    // encoder offset at the CURRENT physical position, so getNormalizedAngle()
-    // reads 0 immediately afterward, and makes that the new homePos.
+    // to the correct physical home and presses dpad-down a second time (see
+    // homeAdjustUnlocked above). It re-zeros the encoder offset at the
+    // CURRENT physical position, so getNormalizedAngle() reads 0 immediately
+    // afterward, and makes that the new homePos.
     // =========================
 
     public void setHomeToCurrentPosition() {
@@ -393,7 +405,11 @@ public class Turret extends SubsystemBase {
             }
 
         } else {
-            currentTargetAngle = homePos;
+            // !enableAim, not locked, not in deadzone latch.
+            // Unlocked: hold current physical position (no pull toward the
+            // OLD home while jogging toward a new one).
+            // Locked (default): track homePos as before.
+            currentTargetAngle = homeAdjustUnlocked ? normalizedPos : homePos;
         }
 
         // ====================================================================

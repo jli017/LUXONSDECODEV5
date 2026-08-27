@@ -6,21 +6,20 @@ import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
-import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
 import org.firstinspires.ftc.teamcode.utils.Paths;
 import org.firstinspires.ftc.teamcode.utils.Lebruxon;
 
 @Autonomous(preselectTeleOp="TeleOp")
-public class BlueOPT18 extends CommandOpMode {
+public class Red18 extends CommandOpMode {
 
     Paths paths;
 
     @Override
     public void initialize() {
-        Lebruxon.init(hardwareMap, Lebruxon.MatchState.AUTO, Lebruxon.Alliance.BLUESQ);
-        paths = new Paths(Lebruxon.drivetrain.follower, Lebruxon.Alliance.BLUESQ);
+        Lebruxon.init(hardwareMap, Lebruxon.MatchState.AUTO, Lebruxon.Alliance.REDSQ);
+        paths = new Paths(Lebruxon.drivetrain.follower, Lebruxon.Alliance.REDSQ);
         Lebruxon.drivetrain.follower.setMaxPower(1);
 
 
@@ -32,7 +31,7 @@ public class BlueOPT18 extends CommandOpMode {
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosestartToScore),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                 //Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -48,7 +47,7 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                 //Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -64,7 +63,7 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                 //Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -79,7 +78,7 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                 //Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
@@ -106,7 +105,7 @@ public class BlueOPT18 extends CommandOpMode {
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 new WaitCommand(50),
                 Lebruxon.shootWithIntake(),
-                 //Lebruxon.reset(),
+                //Lebruxon.reset(),
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);

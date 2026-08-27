@@ -23,8 +23,8 @@ public class Drivetrain extends SubsystemBase {
     // =========================
 
     // Target heading (degrees) to lock to, per alliance, while `lock` is true.
-    public static double blueLockHeadingDeg = 150.0;
-    public static double redLockHeadingDeg = 30.0;
+    public static double blueLockHeadingDeg = 143.0;
+    public static double redLockHeadingDeg = 37.0;
 
     // PIDF gains for the heading-lock loop, using SolversLib's PIDFController
     // (same class Turret.java uses). IMPORTANT: the error fed into this
@@ -84,7 +84,7 @@ public class Drivetrain extends SubsystemBase {
                 follower.setTeleOpDrive(
                         gamepad1.left_stick_y * 0.8,
                         gamepad1.left_stick_x * 0.8,
-                        -gamepad1.right_stick_x * 0.8,
+                        -gamepad1.right_stick_x * 0.7,
                         false
                 );
             }
@@ -102,7 +102,7 @@ public class Drivetrain extends SubsystemBase {
                 follower.setTeleOpDrive(
                         -gamepad1.left_stick_y * 0.8,
                         -gamepad1.left_stick_x * 0.8,
-                        -gamepad1.right_stick_x * 0.8,
+                        -gamepad1.right_stick_x * 0.7,
                         false
                 );
             }
