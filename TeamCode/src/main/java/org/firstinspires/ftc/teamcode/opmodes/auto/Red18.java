@@ -51,13 +51,12 @@ public class Red18 extends CommandOpMode {
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
-                    Lebruxon.intake.setPower(1, 1);
                 }),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
+                new InstantCommand(() -> Lebruxon.intake.setPower(1, 1)),
                 new WaitCommand(50),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
                 new WaitCommand(600),
-
                 new InstantCommand(() -> Lebruxon.intake.setPower(0, 0)),
                 new InstantCommand(() -> Lebruxon.drivetrain.follower.setMaxPower(1)),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.ClosescoreG1),
@@ -67,9 +66,9 @@ public class Red18 extends CommandOpMode {
 
                 new InstantCommand(() -> {
                     Lebruxon.drivetrain.follower.setMaxPower(1);
-                    Lebruxon.intake.setPower(1, 1);
                 }),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeG1),
+                new InstantCommand(() -> Lebruxon.intake.setPower(1, 1)),
                 new WaitCommand(50),
                 new FollowPathCommand(Lebruxon.drivetrain.follower, paths.CloseIntakeTurn),
                 new WaitCommand(600),

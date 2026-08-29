@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.utils.subsystems;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.math.Vector;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -63,16 +62,6 @@ public class Turret extends SubsystemBase {
     public static double deadzoneMarginDeg = 0.5;
     private static double LOWER_HOLD;
     private static double UPPER_HOLD;
-
-    // =========================
-    // Shoot-on-the-Move
-    // =========================
-
-    public static boolean enableLeadCompensation = true;
-    public static double leadMultiplier = 1.0;
-
-    public double lastLeadX = 0.0;
-    public double lastLeadY = 0.0;
 
     // =========================
     // Predictive aim lock
@@ -214,16 +203,22 @@ public class Turret extends SubsystemBase {
         Storage.turretEncoderSnapshot = encoderMotor.getCurrentPosition();
 
         // ====================================================================
-        // 0. Manual jog override
+        // 0. Manual home-adjust mode (unlocked)
         // ====================================================================
-        if (!enableAim && Math.abs(manualPower) > 0.02) {
-            double clampedManual = clamp(manualPower, -1.0, 1.0) * manualJogPower;
-            leftServo.setPower(-clampedManual);
-            rightServo.setPower(-clampedManual);
+        if (!enableAim && homeAdjustUnlocked) {
+            if (Math.abs(manualPower) > 0.02) {
+                double clampedManual = clamp(manualPower, -1.0, 1.0);
+                leftServo.setPower(-clampedManual);
+                rightServo.setPower(-clampedManual);
+            } else {
+                leftServo.setPower(0);
+                rightServo.setPower(0);
+            }
 
             currentTargetAngle = normalizedPos;
             lastTargetAngle = normalizedPos;
             lastError = 0.0;
+            inDeadzoneLatch = false;
             controller.setSetPoint(currentTargetAngle);
             feedforwardTimer.reset();
             return;
@@ -266,6 +261,10 @@ public class Turret extends SubsystemBase {
             }
 
         } else if (enableAim) {
+            // FIX: shoot-on-the-move lead compensation removed entirely — it
+            // was messing with the turret too much. dx/dy now go straight
+            // to the real target with no lead offset, for both close and
+            // far shots.
             double dx, dy;
             Pose robotPose = Lebruxon.drivetrain.follower.getPose();
 
@@ -275,28 +274,6 @@ public class Turret extends SubsystemBase {
             } else {
                 dx = Lebruxon.targetClose.getX() - robotPose.getX();
                 dy = Lebruxon.targetClose.getY() - robotPose.getY();
-            }
-
-            // FIX: only apply shoot-on-the-move lead compensation for close
-            // shots. Far shots (distance > 100) now aim straight at
-            // targetFar with no lead offset — keeps far shooting on point
-            // instead of getting shifted by a lead correction that was
-            // apparently not reliable at that range.
-            if (enableLeadCompensation && Lebruxon.shooter.distance <= 100) {
-                double timeOfFlight = Lebruxon.shooter.getTimeOfFlight(Lebruxon.shooter.distance);
-                Vector robotVel = Lebruxon.drivetrain.follower.getVelocity();
-
-                double leadX = robotVel.getXComponent() * timeOfFlight * leadMultiplier;
-                double leadY = robotVel.getYComponent() * timeOfFlight * leadMultiplier;
-
-                lastLeadX = leadX;
-                lastLeadY = leadY;
-
-                dx -= leadX;
-                dy -= leadY;
-            } else {
-                lastLeadX = 0.0;
-                lastLeadY = 0.0;
             }
 
             double fieldTargetAngle = wrapToTwoPi(Math.atan2(dy, dx));
@@ -312,7 +289,7 @@ public class Turret extends SubsystemBase {
             }
 
         } else {
-            currentTargetAngle = homeAdjustUnlocked ? normalizedPos : homePos;
+            currentTargetAngle = homePos;
         }
 
         // ====================================================================

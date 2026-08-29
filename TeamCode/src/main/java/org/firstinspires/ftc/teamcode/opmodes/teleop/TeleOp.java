@@ -168,9 +168,9 @@ public class TeleOp extends CommandOpMode {
         Drivetrain.lock = gamepad1.cross;
 
         if (!Lebruxon.turret.enableAim) {
-            double cw = jonathan.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
-            double ccw  = jonathan.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER);
-            Lebruxon.turret.manualPower = (cw * 0.5) - (ccw * 0.5);
+            double ccw = jonathan.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
+            double cw  = jonathan.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER);
+            Lebruxon.turret.manualPower = (cw * 0.2) - (ccw * 0.2);
         } else {
             Lebruxon.turret.manualPower = 0;
         }
